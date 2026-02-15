@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hilal Maroc - Observation du Croissant Lunaire</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <h1>
+                <svg class="crescent-icon" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M50 5C25.2 5 5 25.2 5 50s20.2 45 45 45c10.3 0 19.8-3.5 27.4-9.3C67.8 78.5 58 66 58 50s9.8-28.5 19.4-40.7C69.8 8.5 60.3 5 50 5z"/>
+                    <circle cx="78" cy="20" r="3" fill="currentColor" opacity="0.7"/>
+                </svg>
+                Observation du Croissant Lunaire
+            </h1>
+            <p class="subtitle">Prédiction de la visibilité du Hilal selon les critères du Royaume du Maroc</p>
+            <div class="hijri-date" id="hijri-date"></div>
+            <div class="hijri-date-ar" id="hijri-date-ar"></div>
+        </div>
+    </header>
+
+    <!-- Location Bar -->
+    <div class="location-bar">
+        <div class="location-inner">
+            <div class="city-selector">
+                <label for="select-city">Ville :</label>
+                <select id="select-city">
+                    <option value="">-- Choisir une ville --</option>
+                    <optgroup label="Maroc">
+                        <option value="34.0209,-6.8416" selected>Rabat</option>
+                        <option value="33.5731,-7.5898">Casablanca</option>
+                        <option value="34.0331,-5.0003">Fès</option>
+                        <option value="31.6295,-7.9811">Marrakech</option>
+                        <option value="35.7595,-5.8340">Tanger</option>
+                        <option value="34.6814,-1.9086">Oujda</option>
+                        <option value="33.2600,-2.2190">Bouarfa</option>
+                        <option value="30.4278,-9.5981">Agadir</option>
+                        <option value="27.1536,-13.2034">Laâyoune</option>
+                        <option value="23.7148,-15.9370">Dakhla</option>
+                    </optgroup>
+                    <optgroup label="Autre">
+                        <option value="custom">Coordonnées manuelles...</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <div class="coord-inputs" id="coord-inputs" style="display:none;">
+                <label for="input-lat">Lat :</label>
+                <input type="number" id="input-lat" placeholder="34.0209" step="0.0001" min="-90" max="90">
+                <label for="input-lon">Lon :</label>
+                <input type="number" id="input-lon" placeholder="-6.8416" step="0.0001" min="-180" max="180">
+            </div>
+
+            <button class="btn btn-primary" id="btn-geolocate">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="3"/>
+                    <path d="M12 2v3m0 14v3M2 12h3m14 0h3"/>
+                    <circle cx="12" cy="12" r="8" stroke-dasharray="2 2"/>
+                </svg>
+                Ma position
+            </button>
+
+            <button class="btn btn-accent" id="btn-calculate">
+                Calculer
+            </button>
+
+            <div class="location-status" id="location-status">
+                Ville de référence : Rabat
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main">
+
+        <!-- Prayer Times Section -->
+        <section class="prayer-section" id="prayer-section">
+            <h2 class="section-title">Horaires de Prière — Aujourd'hui</h2>
+            <div class="prayer-card">
+                <div class="prayer-header">
+                    <span class="prayer-date" id="prayer-date"></span>
+                    <span class="prayer-location" id="prayer-location"></span>
+                </div>
+                <div class="prayer-grid" id="prayer-grid">
+                    <!-- Rempli par JS -->
+                </div>
+                <div class="prayer-note">
+                    Convention : Ministère des Habous et des Affaires Islamiques du Maroc
+                    (Fajr : 19°, Isha : 17°, Asr : Shafi'i)
+                </div>
+            </div>
+        </section>
+
+        <h2 class="section-title">Prédictions du Hilal — 12 prochains mois</h2>
+
+        <!-- Morocco criteria legend -->
+        <div class="criteria-legend">
+            <div class="criteria-title">Critères d'observation (Maroc)</div>
+            <div class="criteria-items">
+                <span class="criteria-item">Âge lune &ge; 20h</span>
+                <span class="criteria-item">Durée apparition &ge; 29 min</span>
+                <span class="criteria-item">Élongation &ge; 6°</span>
+                <span class="criteria-item">Lune au-dessus de l'horizon</span>
+            </div>
+        </div>
+
+        <div id="results">
+            <div class="loading">
+                <div class="loading-spinner"></div>
+                <p>Calcul des prédictions du Hilal pour Rabat...</p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Critères : Ministère des Habous et des Affaires Islamiques du Maroc</p>
+        <p>Algorithmes : Jean Meeus, Yallop (1997), Odeh (2006)</p>
+        <p class="disclaimer">
+            Ces prédictions sont fournies à titre indicatif uniquement.
+            La détermination officielle des mois lunaires relève du Ministère des Habous et des Affaires Islamiques.
+        </p>
+    </footer>
+
+    <!-- Scripts (dependency order) -->
+    <script src="js/astronomy.js"></script>
+    <script src="js/sun.js"></script>
+    <script src="js/prayer.js"></script>
+    <script src="js/moon.js"></script>
+    <script src="js/phases.js"></script>
+    <script src="js/hilal.js"></script>
+    <script src="js/hijri.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

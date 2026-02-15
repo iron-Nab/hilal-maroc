@@ -1,0 +1,785 @@
+/* ============================================================
+   style.css - Hilal Visibility Predictor
+   Design responsive avec touches islamiques
+   ============================================================ */
+
+:root {
+    --primary: #0d4f4f;
+    --primary-light: #1a7a7a;
+    --accent: #c9a84c;
+    --accent-light: #e0c76e;
+    --bg: #f5f0e8;
+    --bg-card: #ffffff;
+    --text: #2c2c2c;
+    --text-light: #666666;
+    --green: #2e7d32;
+    --green-bg: #e8f5e9;
+    --amber: #f57f17;
+    --amber-bg: #fff8e1;
+    --red: #c62828;
+    --red-bg: #ffebee;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --radius: 12px;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Noto Sans Arabic', 'Arial', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* --- Header --- */
+.header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        repeating-conic-gradient(
+            rgba(255, 255, 255, 0.03) 0% 25%,
+            transparent 0% 50%
+        ) 0 0 / 40px 40px;
+    pointer-events: none;
+}
+
+.header-content {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.header h1 {
+    font-size: clamp(1.5rem, 4vw, 2.2rem);
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+}
+
+.header .crescent-icon {
+    width: 36px;
+    height: 36px;
+    fill: var(--accent);
+}
+
+.header .subtitle {
+    font-size: clamp(0.85rem, 2.5vw, 1rem);
+    opacity: 0.85;
+    font-weight: 300;
+}
+
+.hijri-date {
+    margin-top: 0.8rem;
+    font-size: clamp(1rem, 3vw, 1.3rem);
+    color: var(--accent-light);
+    font-weight: 500;
+}
+
+.hijri-date-ar {
+    font-size: clamp(0.9rem, 2.5vw, 1.1rem);
+    opacity: 0.8;
+    direction: rtl;
+}
+
+/* --- Location Bar --- */
+.location-bar {
+    background: var(--bg-card);
+    padding: 1.2rem 1.5rem;
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.location-inner {
+    max-width: 900px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+/* --- City Selector --- */
+.city-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.city-selector label {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.city-selector select {
+    padding: 0.5rem 0.8rem;
+    border: 1.5px solid #ddd;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: #fff;
+    cursor: pointer;
+    min-width: 160px;
+    transition: border-color 0.2s;
+}
+
+.city-selector select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.55rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+}
+.btn-primary:hover {
+    background: var(--primary-light);
+}
+
+.btn-accent {
+    background: var(--accent);
+    color: var(--text);
+}
+.btn-accent:hover {
+    background: var(--accent-light);
+}
+
+.btn svg {
+    width: 18px;
+    height: 18px;
+}
+
+.coord-inputs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.coord-inputs label {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    font-weight: 500;
+}
+
+.coord-inputs input {
+    width: 100px;
+    padding: 0.45rem 0.6rem;
+    border: 1.5px solid #ddd;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: border-color 0.2s;
+}
+
+.coord-inputs input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.location-status {
+    width: 100%;
+    font-size: 0.82rem;
+    color: var(--text-light);
+    margin-top: 0.3rem;
+}
+
+.location-status.error {
+    color: var(--red);
+}
+
+/* --- Main Content --- */
+.main {
+    max-width: 900px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+}
+
+.section-title {
+    font-size: 1.1rem;
+    color: var(--primary);
+    margin-bottom: 0.8rem;
+    font-weight: 600;
+}
+
+/* --- Criteria Legend --- */
+.criteria-legend {
+    background: var(--bg-card);
+    border: 1px solid #e0e0e0;
+    border-radius: 10px;
+    padding: 0.8rem 1rem;
+    margin-bottom: 1.2rem;
+}
+
+.criteria-title {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.criteria-items {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.criteria-item {
+    background: #f5f5f5;
+    padding: 0.25rem 0.7rem;
+    border-radius: 5px;
+    font-size: 0.8rem;
+    color: var(--text);
+    font-weight: 500;
+}
+
+/* --- Loading --- */
+.loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-light);
+}
+
+.loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #e0e0e0;
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- Result Cards --- */
+.results-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+}
+
+.hilal-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left: 5px solid #ccc;
+    transition: box-shadow 0.2s ease;
+}
+
+.hilal-card:hover {
+    box-shadow: var(--shadow-lg);
+}
+
+.hilal-card.hilal-visible {
+    border-left-color: var(--green);
+}
+
+.hilal-card.hilal-marginal {
+    border-left-color: var(--amber);
+}
+
+.hilal-card.hilal-not-visible {
+    border-left-color: var(--red);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.2rem;
+    background: #fafafa;
+    border-bottom: 1px solid #f0f0f0;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.card-header .month-info {
+    flex: 1;
+    min-width: 200px;
+}
+
+.card-header .hijri-month {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.card-header .hijri-month-ar {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    direction: rtl;
+}
+
+.card-header .gregorian-month {
+    font-size: 0.85rem;
+    color: var(--text-light);
+}
+
+.visibility-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.35rem 0.9rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+}
+
+.badge-visible {
+    background: var(--green-bg);
+    color: var(--green);
+}
+
+.badge-marginal {
+    background: var(--amber-bg);
+    color: var(--amber);
+}
+
+.badge-not-visible {
+    background: var(--red-bg);
+    color: var(--red);
+}
+
+.badge-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.badge-visible .badge-dot { background: var(--green); }
+.badge-marginal .badge-dot { background: var(--amber); }
+.badge-not-visible .badge-dot { background: var(--red); }
+
+.card-body {
+    padding: 1rem 1.2rem;
+}
+
+/* --- Visibility Date/Time Highlight --- */
+.visibility-datetime {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.8rem;
+    background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%);
+    border: 1px solid var(--accent);
+    border-radius: 10px;
+    padding: 0.9rem 1rem;
+    margin-bottom: 1rem;
+}
+
+.hilal-not-visible .visibility-datetime {
+    border-color: #ddd;
+    background: #fafafa;
+}
+
+.vis-date-icon {
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--accent);
+    margin-top: 0.1rem;
+}
+
+.hilal-not-visible .vis-date-icon {
+    opacity: 0.4;
+}
+
+.vis-date-info {
+    flex: 1;
+}
+
+.vis-date-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 0.15rem;
+}
+
+.vis-date-value {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--primary);
+    margin-bottom: 0.4rem;
+}
+
+.vis-time-window {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.vis-time-item {
+    display: inline-flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 6px;
+    padding: 0.25rem 0.6rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.vis-time-item .vis-time-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.vis-time-best {
+    background: var(--accent);
+    color: #fff;
+}
+
+.vis-time-best .vis-time-label {
+    color: rgba(255,255,255,0.85);
+}
+
+.vis-time-sep {
+    font-size: 0.6rem;
+    color: var(--text-light);
+}
+
+.vis-tz {
+    font-size: 0.7rem;
+    color: var(--text-light);
+    margin-top: 0.3rem;
+}
+
+/* --- Morocco Criteria Checks --- */
+.maroc-checks {
+    background: #fafafa;
+    border-radius: 8px;
+    padding: 0.7rem 0.9rem;
+    margin-bottom: 0.8rem;
+}
+
+.maroc-checks-title {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-light);
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+}
+
+.check-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.2rem 0;
+    font-size: 0.85rem;
+}
+
+.check-pass {
+    color: var(--green);
+    font-weight: 700;
+    font-size: 0.95rem;
+    width: 1.2rem;
+    text-align: center;
+}
+
+.check-fail {
+    color: var(--red);
+    font-weight: 700;
+    font-size: 0.95rem;
+    width: 1.2rem;
+    text-align: center;
+}
+
+.check-label {
+    font-weight: 500;
+    min-width: 110px;
+}
+
+.check-value {
+    font-weight: 600;
+    color: var(--text);
+}
+
+.check-threshold {
+    color: var(--text-light);
+    font-size: 0.78rem;
+}
+
+/* --- Month Duration --- */
+.month-duration {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 0.6rem;
+}
+
+.param {
+    display: flex;
+    flex-direction: column;
+}
+
+.param label {
+    font-size: 0.72rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+    margin-bottom: 0.1rem;
+}
+
+.param span {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.param .zone-label {
+    font-size: 0.8rem;
+    font-weight: 400;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+.card-note {
+    margin-top: 0.8rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+/* --- Footer --- */
+.footer {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1.5rem 1rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    border-top: 1px solid #e0e0e0;
+}
+
+.footer a {
+    color: var(--primary);
+    text-decoration: none;
+}
+
+.footer .disclaimer {
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+/* --- Empty state --- */
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-light);
+}
+
+.empty-state svg {
+    width: 60px;
+    height: 60px;
+    fill: #ddd;
+    margin-bottom: 1rem;
+}
+
+/* --- Responsive --- */
+@media (min-width: 700px) {
+    .results-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .location-inner {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .coord-inputs {
+        justify-content: center;
+    }
+
+    .btn {
+        justify-content: center;
+    }
+
+    .param-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* --- Prayer Times Section --- */
+.prayer-section {
+    margin-bottom: 1.5rem;
+}
+
+.prayer-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left: 5px solid var(--accent);
+}
+
+.prayer-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.prayer-date {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.prayer-location {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.prayer-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 0;
+}
+
+.prayer-time-item {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    border-right: 1px solid #f0f0f0;
+    transition: background 0.2s;
+}
+
+.prayer-time-item:last-child {
+    border-right: none;
+}
+
+.prayer-time-item:hover {
+    background: #fafaf5;
+}
+
+.prayer-time-item.prayer-next {
+    background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%);
+    border-bottom: 3px solid var(--accent);
+}
+
+.prayer-sunrise {
+    opacity: 0.65;
+}
+
+.prayer-name {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--primary);
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.prayer-name-ar {
+    font-size: 0.85rem;
+    color: var(--text-light);
+    direction: rtl;
+    margin-bottom: 0.3rem;
+}
+
+.prayer-time-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.prayer-next .prayer-time-value {
+    color: var(--primary);
+}
+
+.prayer-next-label {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    font-weight: 700;
+    margin-top: 0.2rem;
+}
+
+.prayer-note {
+    padding: 0.5rem 1rem;
+    font-size: 0.72rem;
+    color: var(--text-light);
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+}
+
+@media (max-width: 520px) {
+    .prayer-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .prayer-time-item {
+        border-bottom: 1px solid #f0f0f0;
+    }
+}
+
+/* --- Print --- */
+@media print {
+    .location-bar { position: static; }
+    .btn { display: none; }
+    .hilal-card { break-inside: avoid; box-shadow: none; border: 1px solid #ccc; }
+}
