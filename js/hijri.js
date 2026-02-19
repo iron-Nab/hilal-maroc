@@ -33,7 +33,8 @@ var Hijri = (function () {
                  day + B - 1524;
 
         // Step 2: Julian Day to Hijri
-        var L = JD - 1948440 + 10632;
+        // Offset 10631 (ajusté pour le calendrier marocain observé)
+        var L = JD - 1948440 + 10631;
         var N = Math.floor((L - 1) / 10631);
         L = L - 10631 * N + 354;
 
