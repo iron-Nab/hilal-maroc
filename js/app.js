@@ -37,8 +37,8 @@ var App = (function () {
         renderHadith();
         renderMawida();
 
-        // Auto-compute for default city (Rabat)
-        onCityChange();
+        // Auto-géolocalisation au lancement, fallback sur Rabat
+        autoGeolocate();
     }
 
     // --- City Selector ---
@@ -66,6 +66,82 @@ var App = (function () {
     }
 
     // --- Geolocation ---
+
+    // Trouver la ville la plus proche dans le sélecteur (rayon ~50km)
+    function findNearestCity(lat, lon) {
+        var select = el('select-city');
+        var bestDist = Infinity;
+        var bestValue = null;
+        var bestName = null;
+        for (var i = 0; i < select.options.length; i++) {
+            var opt = select.options[i];
+            var val = opt.value;
+            if (!val || val === 'custom' || val.indexOf(',') === -1) continue;
+            var parts = val.split(',');
+            var cLat = parseFloat(parts[0]);
+            var cLon = parseFloat(parts[1]);
+            var dLat = (lat - cLat) * 111;
+            var dLon = (lon - cLon) * 111 * Math.cos(lat * Math.PI / 180);
+            var dist = Math.sqrt(dLat * dLat + dLon * dLon);
+            if (dist < bestDist) {
+                bestDist = dist;
+                bestValue = val;
+                bestName = opt.text;
+            }
+        }
+        if (bestDist <= 50) return { value: bestValue, name: bestName, dist: bestDist };
+        return null;
+    }
+
+    // Reverse geocoding via OpenStreetMap Nominatim
+    function reverseGeocode(lat, lon, callback) {
+        var url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + lat + '&lon=' + lon + '&zoom=10&accept-language=fr';
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', url, true);
+        xhr.timeout = 5000;
+        xhr.onload = function () {
+            try {
+                var data = JSON.parse(xhr.responseText);
+                var city = data.address.city || data.address.town || data.address.village || data.address.municipality || '';
+                var country = data.address.country || '';
+                callback(city, country);
+            } catch (e) {
+                callback('', '');
+            }
+        };
+        xhr.onerror = function () { callback('', ''); };
+        xhr.ontimeout = function () { callback('', ''); };
+        xhr.send();
+    }
+
+    // Appliquer la position détectée (utilisé par geolocate et autoGeolocate)
+    function applyPosition(lat, lon) {
+        var nearest = findNearestCity(lat, lon);
+        if (nearest) {
+            // Ville connue dans le sélecteur
+            el('select-city').value = nearest.value;
+            el('coord-inputs').style.display = 'none';
+            state.cityName = nearest.name;
+            setStatus('Ville détectée : ' + nearest.name + ' (' + formatCoord(lat, 'N', 'S') + ', ' + formatCoord(lon, 'E', 'W') + ')', false);
+            computeAndRender(lat, lon);
+        } else {
+            // Ville inconnue — reverse geocoding
+            el('select-city').value = 'custom';
+            el('coord-inputs').style.display = 'flex';
+            el('input-lat').value = lat;
+            el('input-lon').value = lon;
+            setStatus('Position détectée. Recherche de la ville...', false);
+            reverseGeocode(lat, lon, function (city, country) {
+                var label = city && country ? city + ', ' + country : city || country || 'Ma position';
+                state.cityName = label;
+                setStatus(label + ' (' + formatCoord(lat, 'N', 'S') + ', ' + formatCoord(lon, 'E', 'W') + ')', false);
+                el('prayer-location').textContent = label;
+            });
+            computeAndRender(lat, lon);
+        }
+    }
+
+    // Géolocalisation manuelle (bouton)
     function geolocate() {
         if (!navigator.geolocation) {
             setStatus('Géolocalisation non disponible. Sélectionnez une ville.', true);
@@ -78,13 +154,7 @@ var App = (function () {
             function (pos) {
                 var lat = Math.round(pos.coords.latitude * 10000) / 10000;
                 var lon = Math.round(pos.coords.longitude * 10000) / 10000;
-                el('select-city').value = 'custom';
-                el('coord-inputs').style.display = 'flex';
-                el('input-lat').value = lat;
-                el('input-lon').value = lon;
-                state.cityName = 'Ma position';
-                setStatus('Position détectée : ' + formatCoord(lat, 'N', 'S') + ', ' + formatCoord(lon, 'E', 'W'), false);
-                computeAndRender(lat, lon);
+                applyPosition(lat, lon);
             },
             function (err) {
                 var msg = 'Géolocalisation refusée. ';
@@ -94,6 +164,29 @@ var App = (function () {
                 setStatus(msg + 'Sélectionnez une ville marocaine.', true);
             },
             { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        );
+    }
+
+    // Auto-géolocalisation au lancement (silencieuse, fallback Rabat)
+    function autoGeolocate() {
+        if (!navigator.geolocation) {
+            onCityChange(); // Fallback Rabat
+            return;
+        }
+
+        setStatus('Détection de votre position...', false);
+
+        navigator.geolocation.getCurrentPosition(
+            function (pos) {
+                var lat = Math.round(pos.coords.latitude * 10000) / 10000;
+                var lon = Math.round(pos.coords.longitude * 10000) / 10000;
+                applyPosition(lat, lon);
+            },
+            function () {
+                // Silencieux : fallback sur la ville par défaut (Rabat)
+                onCityChange();
+            },
+            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
         );
     }
 
