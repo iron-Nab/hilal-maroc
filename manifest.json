@@ -1,0 +1,26 @@
+{
+  "name": "Hilal Maroc",
+  "short_name": "Hilal Maroc",
+  "description": "Prédiction de la visibilité du croissant lunaire et horaires de prière — Royaume du Maroc",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f5f0eb",
+  "theme_color": "#1a3a2a",
+  "lang": "fr",
+  "dir": "ltr",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -4,7 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hilal Maroc - Observation du Croissant Lunaire</title>
-    <link rel="stylesheet" href="css/style.css?v=4">
+    <link rel="stylesheet" href="css/style.css?v=5">
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hilal Maroc">
+    <meta name="theme-color" content="#1a3a2a">
 </head>
 <body>
 
@@ -179,16 +186,21 @@
     </footer>
 
     <!-- Scripts (dependency order) -->
-    <script src="js/astronomy.js?v=4"></script>
-    <script src="js/sun.js?v=4"></script>
-    <script src="js/prayer.js?v=4"></script>
-    <script src="js/moon.js?v=4"></script>
-    <script src="js/phases.js?v=4"></script>
-    <script src="js/hilal.js?v=4"></script>
-    <script src="js/hijri.js?v=4"></script>
-    <script src="js/hadith.js?v=4"></script>
-    <script src="js/mawaid.js?v=4"></script>
-    <script src="js/history.js?v=4"></script>
-    <script src="js/app.js?v=4"></script>
+    <script src="js/astronomy.js?v=5"></script>
+    <script src="js/sun.js?v=5"></script>
+    <script src="js/prayer.js?v=5"></script>
+    <script src="js/moon.js?v=5"></script>
+    <script src="js/phases.js?v=5"></script>
+    <script src="js/hilal.js?v=5"></script>
+    <script src="js/hijri.js?v=5"></script>
+    <script src="js/hadith.js?v=5"></script>
+    <script src="js/mawaid.js?v=5"></script>
+    <script src="js/history.js?v=5"></script>
+    <script src="js/app.js?v=5"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
+    </script>
 </body>
 </html>
