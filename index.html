@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hilal Maroc - Observation du Croissant Lunaire</title>
-    <link rel="stylesheet" href="css/style.css?v=2">
+    <link rel="stylesheet" href="css/style.css?v=3">
 </head>
 <body>
 
@@ -78,6 +78,35 @@
     <!-- Main Content -->
     <main class="main">
 
+        <!-- Hadith du Jour -->
+        <section class="hadith-section" id="hadith-section">
+            <h2 class="section-title">&#128214; Hadith du Jour — حديث اليوم</h2>
+            <div class="hadith-card">
+                <div class="hadith-ar" id="hadith-ar"></div>
+                <div class="hadith-fr" id="hadith-fr"></div>
+                <div class="hadith-meta">
+                    <span class="hadith-narrateur" id="hadith-narrateur"></span>
+                    <span class="hadith-source" id="hadith-source"></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Maw3ida du Jour -->
+        <section class="mawida-section" id="mawida-section">
+            <h2 class="section-title">&#127775; Conseil du Jour — موعظة اليوم</h2>
+            <div class="mawida-card">
+                <div class="mawida-header">
+                    <span class="mawida-titre" id="mawida-titre"></span>
+                    <span class="mawida-titre-ar" id="mawida-titre-ar"></span>
+                </div>
+                <div class="mawida-contenu" id="mawida-contenu"></div>
+                <div class="mawida-verset">
+                    <div class="mawida-verset-ar" id="mawida-verset"></div>
+                    <div class="mawida-reference" id="mawida-reference"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Prayer Times Section -->
         <section class="prayer-section" id="prayer-section">
             <h2 class="section-title">Horaires de Prière — Aujourd'hui</h2>
@@ -93,6 +122,28 @@
                     Convention : Ministère des Habous et des Affaires Islamiques du Maroc
                     (Fajr : 19°, Isha : 17°, Asr : Shafi'i)
                 </div>
+            </div>
+        </section>
+
+        <!-- Historique des Observations -->
+        <section class="history-section" id="history-section">
+            <h2 class="section-title">&#128197; Historique des Observations — <span id="history-year"></span></h2>
+            <div class="history-summary" id="history-summary"></div>
+            <div class="history-table-wrap">
+                <table class="history-table" id="history-table">
+                    <thead>
+                        <tr>
+                            <th>Mois Hijri</th>
+                            <th>Nouvelle Lune</th>
+                            <th>Date d'observation</th>
+                            <th>Statut</th>
+                            <th>Détails</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <!-- Rempli par JS -->
+                    </tbody>
+                </table>
             </div>
         </section>
 
@@ -128,13 +179,16 @@
     </footer>
 
     <!-- Scripts (dependency order) -->
-    <script src="js/astronomy.js?v=2"></script>
-    <script src="js/sun.js?v=2"></script>
-    <script src="js/prayer.js?v=2"></script>
-    <script src="js/moon.js?v=2"></script>
-    <script src="js/phases.js?v=2"></script>
-    <script src="js/hilal.js?v=2"></script>
-    <script src="js/hijri.js?v=2"></script>
-    <script src="js/app.js?v=2"></script>
+    <script src="js/astronomy.js?v=3"></script>
+    <script src="js/sun.js?v=3"></script>
+    <script src="js/prayer.js?v=3"></script>
+    <script src="js/moon.js?v=3"></script>
+    <script src="js/phases.js?v=3"></script>
+    <script src="js/hilal.js?v=3"></script>
+    <script src="js/hijri.js?v=3"></script>
+    <script src="js/hadith.js?v=3"></script>
+    <script src="js/mawaid.js?v=3"></script>
+    <script src="js/history.js?v=3"></script>
+    <script src="js/app.js?v=3"></script>
 </body>
 </html>

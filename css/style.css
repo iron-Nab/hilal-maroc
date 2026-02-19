@@ -661,6 +661,282 @@ body {
     }
 }
 
+/* --- Hadith du Jour --- */
+.hadith-section {
+    margin-bottom: 1.5rem;
+}
+
+.hadith-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    padding: 1.5rem;
+    border-left: 5px solid var(--primary);
+    position: relative;
+}
+
+.hadith-ar {
+    font-size: 1.3rem;
+    line-height: 2;
+    color: var(--primary);
+    text-align: center;
+    direction: rtl;
+    font-family: 'Noto Sans Arabic', 'Traditional Arabic', 'Arial', serif;
+    padding: 1rem 0.5rem;
+    margin-bottom: 0.8rem;
+    background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%);
+    border-radius: 8px;
+}
+
+.hadith-fr {
+    font-size: 0.95rem;
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0 0.3rem;
+    margin-bottom: 0.8rem;
+    font-style: italic;
+}
+
+.hadith-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 0.6rem;
+    border-top: 1px solid #f0f0f0;
+    font-size: 0.8rem;
+    color: var(--text-light);
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.hadith-narrateur {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.hadith-source {
+    font-style: italic;
+}
+
+/* --- Maw3ida du Jour --- */
+.mawida-section {
+    margin-bottom: 1.5rem;
+}
+
+.mawida-card {
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    border-left: 5px solid var(--accent);
+}
+
+.mawida-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.8rem 1.2rem;
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+    color: #fff;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.mawida-titre {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.mawida-titre-ar {
+    font-size: 1rem;
+    direction: rtl;
+    opacity: 0.85;
+}
+
+.mawida-contenu {
+    padding: 1.2rem;
+    font-size: 0.92rem;
+    line-height: 1.8;
+    color: var(--text);
+}
+
+.mawida-verset {
+    padding: 0.8rem 1.2rem;
+    background: linear-gradient(135deg, #f8f6f0 0%, #f0ede4 100%);
+    border-top: 1px solid #f0f0f0;
+    text-align: center;
+}
+
+.mawida-verset-ar {
+    font-size: 1.15rem;
+    color: var(--primary);
+    direction: rtl;
+    font-family: 'Noto Sans Arabic', 'Traditional Arabic', 'Arial', serif;
+    line-height: 2;
+    margin-bottom: 0.3rem;
+}
+
+.mawida-reference {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+/* --- Historique des Observations --- */
+.history-section {
+    margin-bottom: 1.5rem;
+}
+
+.history-stats {
+    display: flex;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+}
+
+.history-stat {
+    flex: 1;
+    min-width: 80px;
+    background: var(--bg-card);
+    border-radius: 10px;
+    box-shadow: var(--shadow);
+    padding: 0.8rem;
+    text-align: center;
+    border-top: 3px solid #ccc;
+}
+
+.history-stat .stat-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text);
+}
+
+.history-stat .stat-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-light);
+    font-weight: 600;
+}
+
+.history-stat.stat-visible {
+    border-top-color: var(--green);
+}
+.history-stat.stat-visible .stat-number {
+    color: var(--green);
+}
+
+.history-stat.stat-marginal {
+    border-top-color: var(--amber);
+}
+.history-stat.stat-marginal .stat-number {
+    color: var(--amber);
+}
+
+.history-stat.stat-not-visible {
+    border-top-color: var(--red);
+}
+.history-stat.stat-not-visible .stat-number {
+    color: var(--red);
+}
+
+.history-table-wrap {
+    overflow-x: auto;
+}
+
+.history-table {
+    width: 100%;
+    background: var(--bg-card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border-collapse: collapse;
+    overflow: hidden;
+    font-size: 0.85rem;
+}
+
+.history-table thead th {
+    background: var(--primary);
+    color: #fff;
+    padding: 0.7rem 0.8rem;
+    text-align: left;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    font-weight: 600;
+}
+
+.history-table tbody td {
+    padding: 0.6rem 0.8rem;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: top;
+}
+
+.history-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+.history-table tbody tr:hover {
+    background: #fafaf5;
+}
+
+.history-ar {
+    direction: rtl;
+    font-size: 0.82rem;
+    color: var(--text-light);
+}
+
+.history-time {
+    font-size: 0.78rem;
+    color: var(--text-light);
+}
+
+.history-badge {
+    font-size: 0.68rem;
+    padding: 0.25rem 0.6rem;
+}
+
+.history-details {
+    font-size: 0.78rem;
+    color: var(--text-light);
+    line-height: 1.5;
+}
+
+.history-empty {
+    text-align: center;
+    padding: 1.5rem !important;
+    color: var(--text-light);
+    font-style: italic;
+}
+
+@media (max-width: 520px) {
+    .history-stats {
+        gap: 0.5rem;
+    }
+
+    .history-stat {
+        min-width: 60px;
+        padding: 0.6rem 0.4rem;
+    }
+
+    .history-stat .stat-number {
+        font-size: 1.2rem;
+    }
+
+    .history-table {
+        font-size: 0.78rem;
+    }
+
+    .history-table thead th,
+    .history-table tbody td {
+        padding: 0.5rem;
+    }
+
+    .hadith-ar {
+        font-size: 1.1rem;
+    }
+}
+
 /* --- Prayer Times Section --- */
 .prayer-section {
     margin-bottom: 1.5rem;

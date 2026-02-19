@@ -33,6 +33,10 @@ var App = (function () {
         // Show current Hijri date
         updateHijriDate();
 
+        // Hadith et Maw3ida du jour
+        renderHadith();
+        renderMawida();
+
         // Auto-compute for default city (Rabat)
         onCityChange();
     }
@@ -176,6 +180,26 @@ var App = (function () {
         el('prayer-grid').innerHTML = html;
         el('prayer-date').textContent = formatLocalDateFull(year, month, day);
         el('prayer-location').textContent = state.cityName || '';
+
+        // Envoyer les horaires à l'app native (notifications)
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.prayerTimes) {
+            var nativeData = [];
+            for (var k = 0; k < prayers.length; k++) {
+                var pr = prayers[k];
+                if (pr.ut === null) continue;
+                var totalMin = Math.round(pr.ut * 60) + tzOffset;
+                if (totalMin < 0) totalMin += 1440;
+                if (totalMin >= 1440) totalMin -= 1440;
+                nativeData.push({
+                    name: pr.name,
+                    nameAr: pr.nameAr,
+                    hour: Math.floor(totalMin / 60),
+                    minute: totalMin % 60,
+                    isPrayer: pr.isPrayer
+                });
+            }
+            window.webkit.messageHandlers.prayerTimes.postMessage({ prayers: nativeData });
+        }
     }
 
     // --- Main computation ---
@@ -198,6 +222,8 @@ var App = (function () {
                 }
 
                 state.predictions = predictions;
+                History.saveAllPredictions(predictions);
+                renderHistory();
                 renderResults(predictions);
             } catch (e) {
                 console.error('Computation error:', e);
@@ -424,6 +450,86 @@ var App = (function () {
             var absOff = Math.abs(offset);
             return 'UTC' + sign + pad2(Math.floor(absOff / 60)) + ':' + pad2(absOff % 60);
         }
+    }
+
+    // --- Hadith du jour ---
+    function renderHadith() {
+        var hadith = Hadith.getToday();
+        el('hadith-ar').textContent = hadith.ar;
+        el('hadith-fr').textContent = hadith.fr;
+        el('hadith-narrateur').textContent = hadith.narrateur;
+        el('hadith-source').textContent = hadith.source;
+    }
+
+    // --- Maw3ida du jour ---
+    function renderMawida() {
+        var mawida = Mawaid.getToday();
+        el('mawida-titre').textContent = mawida.titre;
+        el('mawida-titre-ar').textContent = mawida.titreAr;
+        el('mawida-contenu').textContent = mawida.contenu;
+        el('mawida-verset').textContent = mawida.verset;
+        el('mawida-reference').textContent = mawida.reference;
+    }
+
+    // --- Historique des observations ---
+    function renderHistory() {
+        var observations = History.getObservations();
+        var summary = History.getSummary();
+        var currentYear = new Date().getFullYear();
+
+        el('history-year').textContent = currentYear;
+
+        // Résumé
+        var summaryHtml = '<div class="history-stats">';
+        summaryHtml += '<div class="history-stat"><span class="stat-number">' + summary.total + '</span><span class="stat-label">Total</span></div>';
+        summaryHtml += '<div class="history-stat stat-visible"><span class="stat-number">' + summary.visible + '</span><span class="stat-label">Visible</span></div>';
+        summaryHtml += '<div class="history-stat stat-marginal"><span class="stat-number">' + summary.marginal + '</span><span class="stat-label">Marginal</span></div>';
+        summaryHtml += '<div class="history-stat stat-not-visible"><span class="stat-number">' + summary.nonVisible + '</span><span class="stat-label">Non visible</span></div>';
+        summaryHtml += '</div>';
+        el('history-summary').innerHTML = summaryHtml;
+
+        // Tableau
+        var tbody = el('history-tbody');
+        if (observations.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="history-empty">Aucune observation enregistrée pour cette année.</td></tr>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < observations.length; i++) {
+            var obs = observations[i];
+            var statusBadge = obs.status === 'visible' ? 'badge-visible' :
+                              obs.status === 'marginal' ? 'badge-marginal' : 'badge-not-visible';
+
+            html += '<tr>';
+            html += '<td><strong>' + escapeHtml(obs.hijriMonth) + '</strong><br><span class="history-ar">' + escapeHtml(obs.hijriMonthAr) + '</span> ' + obs.hijriYear + '</td>';
+            html += '<td>' + formatHistoryDate(obs.newMoonDate) + '<br><span class="history-time">' + escapeHtml(obs.newMoonTime) + '</span></td>';
+            html += '<td>' + (obs.observationDate ? formatHistoryDate(obs.observationDate) : '—') + '</td>';
+            html += '<td><span class="visibility-badge ' + statusBadge + ' history-badge"><span class="badge-dot"></span>' + getStatusLabel(obs.status) + '</span></td>';
+            html += '<td class="history-details">';
+            if (obs.details.moonAge) html += 'Age: ' + escapeHtml(obs.details.moonAge) + '<br>';
+            if (obs.details.lagMinutes) html += 'Lag: ' + obs.details.lagMinutes + ' min<br>';
+            if (obs.details.elongation) html += 'Elong: ' + obs.details.elongation + '°';
+            html += '</td>';
+            html += '</tr>';
+        }
+        tbody.innerHTML = html;
+    }
+
+    function formatHistoryDate(dateStr) {
+        if (!dateStr) return '—';
+        var parts = dateStr.split('-');
+        if (parts.length !== 3) return escapeHtml(dateStr);
+        var months = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun',
+                      'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
+        var m = parseInt(parts[1], 10);
+        return parseInt(parts[2], 10) + ' ' + months[m - 1] + ' ' + parts[0];
+    }
+
+    function getStatusLabel(status) {
+        if (status === 'visible') return 'VISIBLE';
+        if (status === 'marginal') return 'MARGINAL';
+        return 'NON VISIBLE';
     }
 
     // --- Hijri date display ---
