@@ -1,8 +1,10 @@
-const CACHE_NAME = 'hilal-maroc-v5';
+const CACHE_NAME = 'hilal-maroc-v6';
 const ASSETS = [
   './',
   './index.html',
+  './quran.html',
   './css/style.css',
+  './css/quran.css',
   './js/astronomy.js',
   './js/sun.js',
   './js/prayer.js',
@@ -14,6 +16,7 @@ const ASSETS = [
   './js/mawaid.js',
   './js/history.js',
   './js/app.js',
+  './js/quran-reader.js',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './manifest.json'

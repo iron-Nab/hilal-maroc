@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="ar" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coran Warsh - Hilal Maroc</title>
+    <link rel="stylesheet" href="css/quran.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Hilal Maroc">
+    <meta name="theme-color" content="#0d4f4f">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="quran-header">
+        <div class="header-top" style="position:relative;">
+            <a href="index.html" class="btn-home" title="Retour accueil">&#8592;</a>
+            <h1>&#1602;&#1585;&#1570;&#1606; &#1603;&#1585;&#1610;&#1605;</h1>
+        </div>
+        <p class="subtitle">Riwayat Warsh - &#1585;&#1608;&#1575;&#1610;&#1577; &#1608;&#1585;&#1588;</p>
+    </header>
+
+    <!-- === Vue Liste === -->
+    <div id="view-list">
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <input type="text" id="search-sura" class="search-input" placeholder="Rechercher une sourate...">
+            <button class="btn-toolbar btn-resume" id="btn-resume" style="display:none;">
+                &#9654; Reprendre
+            </button>
+            <button class="btn-toolbar btn-download" id="btn-download-all">
+                &#8595; Hors-ligne
+            </button>
+        </div>
+
+        <div id="bookmark-info"></div>
+
+        <div id="download-progress" class="download-progress">
+            <div class="progress-bar"><div class="progress-fill"></div></div>
+            <div class="progress-text">0/114 sourates</div>
+        </div>
+
+        <!-- Sura List -->
+        <div class="sura-list" id="sura-list"></div>
+
+        <div class="quran-footer">
+            <a href="index.html">&larr; Retour &agrave; Hilal Maroc</a>
+        </div>
+    </div>
+
+    <!-- === Vue Lecture === -->
+    <div id="view-reading">
+
+        <!-- Reading Header -->
+        <div class="reading-header">
+            <div class="reading-nav">
+                <button class="btn-nav btn-back" id="btn-back-list">&#8592; Sourates</button>
+                <div class="sura-selector-wrap">
+                    <select id="sura-selector"></select>
+                </div>
+                <button class="btn-nav" id="btn-prev-sura">&#8594;</button>
+                <button class="btn-nav" id="btn-next-sura">&#8592;</button>
+            </div>
+            <div id="reading-sura-name"></div>
+            <div id="reading-sura-latin"></div>
+            <div id="reading-sura-info"></div>
+        </div>
+
+        <!-- Reading Content -->
+        <div class="reading-body">
+            <div id="reading-content"></div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+            <button class="btn-nav" id="btn-prev-sura-bottom" style="display:none;">Pr&eacute;c&eacute;dente</button>
+            <button class="btn-nav" id="btn-next-sura-bottom" style="display:none;">Suivante</button>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script src="js/quran-reader.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('./sw.js');
+    }
+    </script>
+</body>
+</html>

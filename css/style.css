@@ -104,6 +104,40 @@ body {
     direction: rtl;
 }
 
+/* --- Quick Nav --- */
+.quick-nav {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, #0a3a2a 0%, #0d4f4f 100%);
+    border-bottom: 2px solid var(--accent);
+}
+
+.quick-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    text-decoration: none;
+    border-radius: 24px;
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: background 0.2s;
+    border: 1px solid rgba(201, 168, 76, 0.3);
+}
+.quick-nav-link:hover {
+    background: rgba(201, 168, 76, 0.2);
+}
+
+.quick-nav-icon {
+    font-family: 'Traditional Arabic', 'Amiri', serif;
+    font-size: 1.2rem;
+    line-height: 1;
+}
+
 /* --- Location Bar --- */
 .location-bar {
     background: var(--bg-card);
