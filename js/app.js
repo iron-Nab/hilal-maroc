@@ -636,7 +636,8 @@ var App = (function () {
 
     // --- Public API ---
     return {
-        init: init
+        init: init,
+        applyPosition: applyPosition
     };
 })();
 
