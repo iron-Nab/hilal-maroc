@@ -1,6 +1,6 @@
 /* =====================================================
    Quran Reader — Riwayat Warsh
-   Lecteur Coran avec cache IndexedDB + sauvegarde avancement
+   Lecteur Coran avec Hizb, signets multiples, cache IndexedDB
    ===================================================== */
 var QuranReader = (function() {
     'use strict';
@@ -8,7 +8,7 @@ var QuranReader = (function() {
     var DB_NAME = 'hilal-quran';
     var DB_VERSION = 1;
     var STORE_NAME = 'suras';
-    var BOOKMARK_KEY = 'quran-bookmark';
+    var BOOKMARKS_KEY = 'quran-bookmarks';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
 
@@ -73,10 +73,119 @@ var QuranReader = (function() {
         [113,'الفلق','Al-Falaq',5,0],[114,'الناس','An-Nas',6,1]
     ];
 
+    // ── Données Hizb ──
+    // 240 marqueurs (60 Ahzab × 4 quarts) : tableau plat [sourate, ayah, sourate, ayah, ...]
+    // Chaque groupe de 8 valeurs = 1 Hizb (حزب, ربع, نصف, ¾)
+    // Ref: Mushaf standard (Complexe Roi Fahd / Mushaf Warsh Maghrébin)
+    var HIZB_FLAT = [
+        // H1                       H2
+        1,1, 2,26, 2,44, 2,60,     2,75, 2,92, 2,106, 2,124,
+        // H3                       H4
+        2,142, 2,158, 2,177, 2,189, 2,203, 2,219, 2,233, 2,243,
+        // H5                       H6
+        2,253, 2,263, 2,272, 2,283, 3,1, 3,15, 3,33, 3,52,
+        // H7                       H8
+        3,75, 3,93, 3,113, 3,133,   3,153, 3,171, 3,186, 4,1,
+        // H9                       H10
+        4,12, 4,24, 4,36, 4,58,    4,74, 4,88, 4,100, 4,114,
+        // H11                      H12
+        4,135, 4,148, 4,163, 5,1,  5,12, 5,27, 5,41, 5,51,
+        // H13                      H14
+        5,67, 5,82, 5,97, 5,109,   6,1, 6,13, 6,36, 6,59,
+        // H15                      H16
+        6,74, 6,95, 6,111, 6,127,  6,141, 6,151, 6,159, 7,1,
+        // H17                      H18
+        7,31, 7,47, 7,65, 7,88,    7,117, 7,142, 7,156, 7,171,
+        // H19                      H20
+        7,189, 8,1, 8,22, 8,41,    8,61, 9,1, 9,19, 9,34,
+        // H21                      H22
+        9,46, 9,60, 9,75, 9,93,    9,111, 9,122, 10,1, 10,26,
+        // H23                      H24
+        10,53, 10,71, 10,90, 11,6, 11,24, 11,41, 11,61, 11,84,
+        // H25                      H26
+        11,108, 12,7, 12,30, 12,53, 12,77, 12,101, 13,5, 13,19,
+        // H27                      H28
+        13,35, 14,10, 14,28, 15,1, 15,50, 15,80, 16,1, 16,30,
+        // H29                      H30
+        16,51, 16,75, 16,90, 16,111, 17,1, 17,23, 17,50, 17,70,
+        // H31                      H32
+        17,99, 18,17, 18,32, 18,51, 18,75, 19,1, 19,22, 19,59,
+        // H33                      H34
+        19,96, 20,55, 20,83, 20,111, 21,1, 21,29, 21,51, 21,83,
+        // H35                      H36
+        22,1, 22,19, 22,38, 22,60, 23,1, 23,36, 23,75, 24,1,
+        // H37                      H38
+        24,21, 24,35, 24,53, 24,62, 25,21, 25,53, 26,1, 26,52,
+        // H39                      H40
+        26,111, 26,181, 27,1, 27,27, 27,56, 27,82, 28,12, 28,29,
+        // H41                      H42
+        28,51, 28,76, 29,1, 29,26, 29,46, 30,1, 30,31, 30,54,
+        // H43                      H44
+        31,22, 32,1, 32,21, 33,18, 33,31, 33,51, 33,60, 34,10,
+        // H45                      H46
+        34,24, 34,46, 35,15, 35,41, 36,28, 36,60, 37,22, 37,83,
+        // H47                      H48
+        37,145, 38,21, 38,52, 39,8, 39,32, 39,53, 40,1, 40,21,
+        // H49                      H50
+        40,41, 40,66, 41,9, 41,25, 41,47, 42,13, 42,27, 42,51,
+        // H51                      H52
+        43,24, 43,57, 44,17, 45,12, 46,1, 46,21, 47,10, 47,33,
+        // H53                      H54
+        48,18, 49,1, 49,14, 50,27, 51,31, 52,24, 53,26, 54,28,
+        // H55                      H56
+        55,33, 56,39, 56,75, 57,16, 58,1, 58,14, 59,11, 60,7,
+        // H57                      H58
+        61,1, 62,6, 63,4, 65,1,    66,1, 67,1, 68,1, 69,1,
+        // H59                      H60
+        70,19, 72,1, 73,20, 75,1,  77,1, 80,1, 84,1, 90,1
+    ];
+
+    // Labels des quarts de Hizb
+    var QUARTER_LABELS = [
+        { ar: '\u062d\u0632\u0628', fr: 'Hizb' },          // 0 = début حزب
+        { ar: '\u0631\u0628\u0639', fr: 'Rub\' (1/4)' },   // 1 = ربع
+        { ar: '\u0646\u0635\u0641', fr: 'Nisf (1/2)' },    // 2 = نصف
+        { ar: '\u00be', fr: '3/4' }                          // 3 = ¾
+    ];
+
     var BISMILLAH = '\u0628\u0650\u0633\u0652\u0645\u0650 \u0627\u0644\u0644\u0651\u064e\u0647\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650';
 
     var currentSura = null;
     var db = null;
+    var hizbLookup = {};
+
+    // ── Construire le lookup Hizb ──
+    function buildHizbLookup() {
+        hizbLookup = {};
+        for (var i = 0; i < HIZB_FLAT.length; i += 2) {
+            var s = HIZB_FLAT[i];
+            var a = HIZB_FLAT[i + 1];
+            var qIdx = i / 2;              // index du quart (0-239)
+            var hizb = Math.floor(qIdx / 4) + 1;  // Hizb 1-60
+            var quarter = qIdx % 4;        // 0=حزب, 1=ربع, 2=نصف, 3=¾
+            var juz = Math.ceil(hizb / 2);  // Juz 1-30
+            hizbLookup[s + ':' + a] = { hizb: hizb, quarter: quarter, juz: juz };
+        }
+    }
+
+    function getHizbInfo(suraNum, ayahNum) {
+        return hizbLookup[suraNum + ':' + ayahNum] || null;
+    }
+
+    // Trouver le Juz/Hizb courant pour une sourate donnée
+    function getSuraHizbInfo(suraNum) {
+        // Parcourir les marqueurs pour trouver le dernier avant cette sourate
+        var lastHizb = 1, lastJuz = 1;
+        for (var i = 0; i < HIZB_FLAT.length; i += 2) {
+            var s = HIZB_FLAT[i];
+            var a = HIZB_FLAT[i + 1];
+            if (s > suraNum || (s === suraNum && a > 1)) break;
+            var qIdx = i / 2;
+            lastHizb = Math.floor(qIdx / 4) + 1;
+            lastJuz = Math.ceil(lastHizb / 2);
+        }
+        return { hizb: lastHizb, juz: lastJuz };
+    }
 
     // ── Chiffres arabes ──
     function toArabicNum(n) {
@@ -147,29 +256,87 @@ var QuranReader = (function() {
         });
     }
 
-    // ── Bookmark ──
-    function saveBookmark(sura, ayah, scrollPos) {
-        var bm = { sura: sura, ayah: ayah, scroll: scrollPos || 0, date: Date.now() };
-        localStorage.setItem(BOOKMARK_KEY, JSON.stringify(bm));
-        updateBookmarkUI();
+    // ── Signets multiples ──
+    function getBookmarks() {
+        try { return JSON.parse(localStorage.getItem(BOOKMARKS_KEY)) || []; }
+        catch(e) { return []; }
     }
 
-    function getBookmark() {
-        try { return JSON.parse(localStorage.getItem(BOOKMARK_KEY)); }
-        catch(e) { return null; }
+    function saveBookmarks(bms) {
+        localStorage.setItem(BOOKMARKS_KEY, JSON.stringify(bms));
     }
 
-    function updateBookmarkUI() {
-        var bm = getBookmark();
-        var el = document.getElementById('bookmark-info');
-        if (!el) return;
-        if (bm) {
-            var s = SURAS[bm.sura - 1];
-            el.innerHTML = 'Signet : Sourate ' + s[1] + ' (' + s[2] + '), Ayah ' + toArabicNum(bm.ayah);
-            el.style.display = 'block';
-        } else {
-            el.style.display = 'none';
+    function addBookmark(sura, ayah) {
+        var bms = getBookmarks();
+        // Éviter les doublons exacts
+        var exists = bms.some(function(b) { return b.sura === sura && b.ayah === ayah; });
+        if (exists) {
+            showToast('Signet déjà enregistré');
+            return;
         }
+        var s = SURAS[sura - 1];
+        var info = getHizbInfo(sura, ayah);
+        var hizbText = info ? ' (Hizb ' + info.hizb + ')' : '';
+        bms.unshift({
+            id: Date.now(),
+            sura: sura,
+            ayah: ayah,
+            suraName: s[1],
+            suraLatin: s[2],
+            hizbInfo: hizbText,
+            date: new Date().toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        });
+        // Max 50 signets
+        if (bms.length > 50) bms = bms.slice(0, 50);
+        saveBookmarks(bms);
+        updateBookmarksList();
+        showToast('Signet ajouté : ' + s[1] + ' — Ayah ' + toArabicNum(ayah));
+    }
+
+    function removeBookmark(id) {
+        var bms = getBookmarks().filter(function(b) { return b.id !== id; });
+        saveBookmarks(bms);
+        updateBookmarksList();
+        showToast('Signet supprimé');
+    }
+
+    function updateBookmarksList() {
+        var container = document.getElementById('bookmarks-list');
+        if (!container) return;
+
+        var bms = getBookmarks();
+        var btnResume = document.getElementById('btn-resume');
+        var btnBookmarks = document.getElementById('btn-bookmarks');
+        var badge = document.getElementById('bookmarks-count');
+
+        if (btnResume) btnResume.style.display = bms.length > 0 ? 'inline-flex' : 'none';
+        if (badge) badge.textContent = bms.length > 0 ? bms.length : '';
+
+        if (bms.length === 0) {
+            container.innerHTML = '<div class="bookmarks-empty">Aucun signet enregistré.<br>Cliquez sur une ayah pendant la lecture pour la marquer.</div>';
+            return;
+        }
+
+        var html = '';
+        for (var i = 0; i < bms.length; i++) {
+            var b = bms[i];
+            html += '<div class="bookmark-item" data-sura="' + b.sura + '" data-ayah="' + b.ayah + '">' +
+                '<div class="bookmark-main">' +
+                    '<div class="bookmark-sura">' + b.suraName + ' <span class="bookmark-latin">' + b.suraLatin + '</span></div>' +
+                    '<div class="bookmark-detail">Ayah ' + toArabicNum(b.ayah) + (b.hizbInfo || '') + ' — ' + b.date + '</div>' +
+                '</div>' +
+                '<button class="bookmark-delete" data-id="' + b.id + '" title="Supprimer">&times;</button>' +
+            '</div>';
+        }
+        container.innerHTML = html;
+    }
+
+    function toggleBookmarksPanel() {
+        var panel = document.getElementById('bookmarks-panel');
+        if (!panel) return;
+        var isOpen = panel.classList.contains('open');
+        panel.classList.toggle('open');
+        if (!isOpen) updateBookmarksList();
     }
 
     // ── Rendu liste sourates ──
@@ -180,6 +347,7 @@ var QuranReader = (function() {
         for (var i = 0; i < SURAS.length; i++) {
             var s = SURAS[i];
             var type = s[4] === 0 ? 'Mecquoise' : 'Médinoise';
+            var info = getSuraHizbInfo(s[0]);
             html += '<div class="sura-item" data-sura="' + s[0] + '">' +
                 '<div class="sura-number">' + toArabicNum(s[0]) + '</div>' +
                 '<div class="sura-info">' +
@@ -188,6 +356,7 @@ var QuranReader = (function() {
                 '</div>' +
                 '<div class="sura-meta">' +
                     '<span class="sura-ayahs">' + toArabicNum(s[3]) + ' ayahs</span>' +
+                    '<span class="sura-juz">Juz ' + toArabicNum(info.juz) + '</span>' +
                     '<span class="sura-type sura-type-' + (s[4] === 0 ? 'mec' : 'med') + '">' + type + '</span>' +
                 '</div>' +
             '</div>';
@@ -200,13 +369,35 @@ var QuranReader = (function() {
         });
     }
 
+    // ── Rendu Hizb marker HTML ──
+    function hizbMarkerHTML(info) {
+        var label = QUARTER_LABELS[info.quarter];
+        var juz = Math.ceil(info.hizb / 2);
+        var cls = 'hizb-marker hizb-q-' + info.quarter;
+        var arLabel = '';
+
+        if (info.quarter === 0) {
+            arLabel = '\u062d\u0632\u0628 ' + toArabicNum(info.hizb);
+        } else {
+            arLabel = label.ar + ' \u062d\u0632\u0628 ' + toArabicNum(info.hizb);
+        }
+
+        return '<div class="' + cls + '">' +
+            '<span class="hizb-icon">\u06DE</span> ' +
+            '<span class="hizb-label-ar">' + arLabel + '</span>' +
+            '<span class="hizb-label-fr">' + label.fr + ' ' + info.hizb + ' — Juz ' + juz + '</span>' +
+        '</div>';
+    }
+
     // ── Rendu lecture sourate ──
     function renderReading(suraNum, ayahs) {
         var s = SURAS[suraNum - 1];
+        var info = getSuraHizbInfo(suraNum);
         document.getElementById('reading-sura-name').textContent = s[1];
         document.getElementById('reading-sura-latin').textContent = s[2];
         document.getElementById('reading-sura-info').textContent =
-            (s[4] === 0 ? 'Mecquoise' : 'Médinoise') + ' — ' + toArabicNum(s[3]) + ' ayahs';
+            (s[4] === 0 ? 'Mecquoise' : 'Médinoise') + ' — ' +
+            toArabicNum(s[3]) + ' ayahs — Juz ' + toArabicNum(info.juz) + ' — Hizb ' + toArabicNum(info.hizb);
 
         var contentEl = document.getElementById('reading-content');
         var html = '';
@@ -216,9 +407,24 @@ var QuranReader = (function() {
             html += '<div class="bismillah">' + BISMILLAH + '</div>';
         }
 
+        // Trouver les ayahs bookmarkées dans cette sourate
+        var bms = getBookmarks();
+        var bookmarkedAyahs = {};
+        bms.forEach(function(b) {
+            if (b.sura === suraNum) bookmarkedAyahs[b.ayah] = true;
+        });
+
         for (var i = 0; i < ayahs.length; i++) {
             var a = ayahs[i];
-            html += '<span class="ayah" id="ayah-' + a.number + '">' +
+
+            // Vérifier marqueur Hizb
+            var hInfo = getHizbInfo(suraNum, a.number);
+            if (hInfo) {
+                html += hizbMarkerHTML(hInfo);
+            }
+
+            var bmClass = bookmarkedAyahs[a.number] ? ' bookmarked' : '';
+            html += '<span class="ayah' + bmClass + '" id="ayah-' + a.number + '">' +
                 a.text +
                 ' <span class="ayah-num">\uFD3F' + toArabicNum(a.number) + '\uFD3E</span>' +
                 '</span> ';
@@ -226,18 +432,16 @@ var QuranReader = (function() {
 
         contentEl.innerHTML = html;
 
-        // Clic sur une ayah pour la marquer
+        // Clic sur une ayah pour sauvegarder un signet
         contentEl.addEventListener('click', function(e) {
+            // Ignorer les clics sur les marqueurs Hizb
+            if (e.target.closest('.hizb-marker, .hizb-q-0, .hizb-q-1, .hizb-q-2, .hizb-q-3')) return;
+
             var ayahEl = e.target.closest('.ayah');
             if (!ayahEl) return;
             var num = parseInt(ayahEl.id.replace('ayah-', ''));
-            saveBookmark(suraNum, num, window.scrollY);
-            // Feedback visuel
-            document.querySelectorAll('.ayah.bookmarked').forEach(function(el) {
-                el.classList.remove('bookmarked');
-            });
+            addBookmark(suraNum, num);
             ayahEl.classList.add('bookmarked');
-            showToast('Signet enregistré : Ayah ' + toArabicNum(num));
         });
 
         // Navigation prev/next
@@ -258,9 +462,13 @@ var QuranReader = (function() {
     }
 
     // ── Navigation ──
-    function goToSura(number) {
+    function goToSura(number, targetAyah) {
         if (number < 1 || number > 114) return;
         currentSura = number;
+
+        // Fermer le panneau signets si ouvert
+        var panel = document.getElementById('bookmarks-panel');
+        if (panel) panel.classList.remove('open');
 
         // Afficher vue lecture
         document.getElementById('view-list').style.display = 'none';
@@ -273,14 +481,14 @@ var QuranReader = (function() {
             renderReading(number, ayahs);
             window.scrollTo(0, 0);
 
-            // Si c'est la sourate du signet, scroller vers l'ayah
-            var bm = getBookmark();
-            if (bm && bm.sura === number && bm.ayah) {
+            // Scroller vers l'ayah cible si spécifiée
+            if (targetAyah) {
                 setTimeout(function() {
-                    var ayahEl = document.getElementById('ayah-' + bm.ayah);
+                    var ayahEl = document.getElementById('ayah-' + targetAyah);
                     if (ayahEl) {
-                        ayahEl.classList.add('bookmarked');
+                        ayahEl.classList.add('highlight-scroll');
                         ayahEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        setTimeout(function() { ayahEl.classList.remove('highlight-scroll'); }, 3000);
                     }
                 }, 100);
             }
@@ -296,12 +504,16 @@ var QuranReader = (function() {
     function goToList() {
         document.getElementById('view-list').style.display = 'block';
         document.getElementById('view-reading').style.display = 'none';
+        var panel = document.getElementById('bookmarks-panel');
+        if (panel) panel.classList.remove('open');
         window.scrollTo(0, 0);
     }
 
     function resumeReading() {
-        var bm = getBookmark();
-        if (bm) goToSura(bm.sura);
+        var bms = getBookmarks();
+        if (bms.length > 0) {
+            goToSura(bms[0].sura, bms[0].ayah);
+        }
     }
 
     // ── Téléchargement hors-ligne ──
@@ -319,7 +531,7 @@ var QuranReader = (function() {
 
         function downloadNext(i) {
             if (i > total) {
-                btn.textContent = 'Téléchargé (114/114)';
+                btn.textContent = 'Hors-ligne (114/114)';
                 progress.querySelector('.progress-fill').style.width = '100%';
                 progress.querySelector('.progress-text').textContent = '114/114 sourates';
                 showToast('Coran téléchargé pour lecture hors-ligne');
@@ -332,7 +544,6 @@ var QuranReader = (function() {
                 progress.querySelector('.progress-text').textContent = done + '/' + total + ' sourates';
                 downloadNext(i + 1);
             }).catch(function() {
-                // Retry after brief pause
                 setTimeout(function() { downloadNext(i); }, 1000);
             });
         }
@@ -355,7 +566,7 @@ var QuranReader = (function() {
         });
     }
 
-    // ── Sura selector (dropdown in reading view) ──
+    // ── Sura selector ──
     function buildSuraSelector() {
         var selector = document.getElementById('sura-selector');
         if (!selector) return;
@@ -373,9 +584,10 @@ var QuranReader = (function() {
 
     // ── Init ──
     function init() {
+        buildHizbLookup();
         renderSuraList();
         buildSuraSelector();
-        updateBookmarkUI();
+        updateBookmarksList();
 
         // Bouton retour
         document.getElementById('btn-back-list').addEventListener('click', goToList);
@@ -388,8 +600,25 @@ var QuranReader = (function() {
             if (currentSura < 114) goToSura(currentSura + 1);
         });
 
-        // Reprendre lecture
+        // Reprendre (dernier signet)
         document.getElementById('btn-resume').addEventListener('click', resumeReading);
+
+        // Signets panel
+        document.getElementById('btn-bookmarks').addEventListener('click', toggleBookmarksPanel);
+
+        // Déléguer clics sur la liste des signets
+        document.getElementById('bookmarks-list').addEventListener('click', function(e) {
+            var delBtn = e.target.closest('.bookmark-delete');
+            if (delBtn) {
+                e.stopPropagation();
+                removeBookmark(parseInt(delBtn.dataset.id));
+                return;
+            }
+            var item = e.target.closest('.bookmark-item');
+            if (item) {
+                goToSura(parseInt(item.dataset.sura), parseInt(item.dataset.ayah));
+            }
+        });
 
         // Télécharger tout
         document.getElementById('btn-download-all').addEventListener('click', downloadAll);
@@ -398,10 +627,6 @@ var QuranReader = (function() {
         document.getElementById('search-sura').addEventListener('input', function() {
             filterSuras(this.value);
         });
-
-        // Afficher/masquer bouton reprendre
-        var bm = getBookmark();
-        document.getElementById('btn-resume').style.display = bm ? 'inline-flex' : 'none';
 
         // Vérifier combien sont en cache
         countCached().then(function(n) {

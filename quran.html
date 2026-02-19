@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coran Warsh - Hilal Maroc</title>
-    <link rel="stylesheet" href="css/quran.css">
+    <link rel="stylesheet" href="css/quran.css?v=2">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -32,12 +32,21 @@
             <button class="btn-toolbar btn-resume" id="btn-resume" style="display:none;">
                 &#9654; Reprendre
             </button>
+            <button class="btn-toolbar btn-bookmarks-toggle" id="btn-bookmarks">
+                &#128278; Signets <span id="bookmarks-count" class="badge"></span>
+            </button>
             <button class="btn-toolbar btn-download" id="btn-download-all">
                 &#8595; Hors-ligne
             </button>
         </div>
 
-        <div id="bookmark-info"></div>
+        <!-- Bookmarks Panel -->
+        <div class="bookmarks-panel" id="bookmarks-panel">
+            <div class="bookmarks-header">
+                <h3>Mes Signets</h3>
+            </div>
+            <div class="bookmarks-list" id="bookmarks-list"></div>
+        </div>
 
         <div id="download-progress" class="download-progress">
             <div class="progress-bar"><div class="progress-fill"></div></div>
@@ -74,18 +83,12 @@
         <div class="reading-body">
             <div id="reading-content"></div>
         </div>
-
-        <!-- Bottom Nav -->
-        <div class="bottom-nav">
-            <button class="btn-nav" id="btn-prev-sura-bottom" style="display:none;">Pr&eacute;c&eacute;dente</button>
-            <button class="btn-nav" id="btn-next-sura-bottom" style="display:none;">Suivante</button>
-        </div>
     </div>
 
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script src="js/quran-reader.js"></script>
+    <script src="js/quran-reader.js?v=2"></script>
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js');
