@@ -446,7 +446,7 @@ body {
 }
 
 /* ── Hizb Markers ── */
-.hizb-marker, .hizb-q-0, .hizb-q-1, .hizb-q-2, .hizb-q-3 {
+.hizb-marker {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -459,29 +459,61 @@ body {
     clear: both;
 }
 
-.hizb-q-0 {
+/* حزب — début de Hizb */
+.hizb-e-0 {
     background: linear-gradient(135deg, var(--primary), var(--primary-light));
     color: white;
     font-weight: 600;
     box-shadow: 0 2px 8px rgba(13, 79, 79, 0.3);
 }
 
-.hizb-q-1 {
+/* ثمن — 1/8 */
+.hizb-e-1 {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+}
+
+/* ربع — 1/4 */
+.hizb-e-2 {
     background: #e8f5e9;
     color: #2e7d32;
     border: 1px solid #c8e6c9;
 }
 
-.hizb-q-2 {
+/* ثمن — 3/8 */
+.hizb-e-3 {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+}
+
+/* نصف — 1/2 */
+.hizb-e-4 {
     background: #e3f2fd;
     color: #1565c0;
     border: 1px solid #bbdefb;
 }
 
-.hizb-q-3 {
+/* ثمن — 5/8 */
+.hizb-e-5 {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
+}
+
+/* ¾ */
+.hizb-e-6 {
     background: #fff3e0;
     color: #e65100;
     border: 1px solid #ffe0b2;
+}
+
+/* ثمن — 7/8 */
+.hizb-e-7 {
+    background: #f3e5f5;
+    color: #7b1fa2;
+    border: 1px solid #e1bee7;
 }
 
 .hizb-icon {
@@ -643,7 +675,7 @@ body {
     .bismillah { font-size: 1.5rem; }
     #reading-sura-name { font-size: 1.6rem; }
     .reading-body { padding: 16px 8px 40px; }
-    .hizb-q-0, .hizb-q-1, .hizb-q-2, .hizb-q-3 {
+    .hizb-marker {
         padding: 8px 12px;
         margin: 12px 0;
         flex-wrap: wrap;

@@ -9,6 +9,7 @@ var QuranReader = (function() {
     var DB_VERSION = 1;
     var STORE_NAME = 'suras';
     var BOOKMARKS_KEY = 'quran-bookmarks';
+    var LAST_POS_KEY = 'quran-last-position';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
 
@@ -140,12 +141,16 @@ var QuranReader = (function() {
         70,19, 72,1, 73,20, 75,1,  77,1, 80,1, 84,1, 90,1
     ];
 
-    // Labels des quarts de Hizb
-    var QUARTER_LABELS = [
-        { ar: '\u062d\u0632\u0628', fr: 'Hizb' },          // 0 = début حزب
-        { ar: '\u0631\u0628\u0639', fr: 'Rub\' (1/4)' },   // 1 = ربع
-        { ar: '\u0646\u0635\u0641', fr: 'Nisf (1/2)' },    // 2 = نصف
-        { ar: '\u00be', fr: '3/4' }                          // 3 = ¾
+    // Labels des huitièmes de Hizb (8 subdivisions)
+    var EIGHTH_LABELS = [
+        { ar: '\u062d\u0632\u0628', fr: 'Hizb' },            // 0 = حزب
+        { ar: '\u062b\u0645\u0646', fr: '1/8' },              // 1 = ثمن
+        { ar: '\u0631\u0628\u0639', fr: '1/4' },              // 2 = ربع
+        { ar: '\u062b\u0645\u0646', fr: '3/8' },              // 3 = ثمن
+        { ar: '\u0646\u0635\u0641', fr: '1/2' },              // 4 = نصف
+        { ar: '\u062b\u0645\u0646', fr: '5/8' },              // 5 = ثمن
+        { ar: '\u00be', fr: '3/4' },                           // 6 = ¾
+        { ar: '\u062b\u0645\u0646', fr: '7/8' }               // 7 = ثمن
     ];
 
     var BISMILLAH = '\u0628\u0650\u0633\u0652\u0645\u0650 \u0627\u0644\u0644\u0651\u064e\u0647\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0652\u0645\u064e\u0670\u0646\u0650 \u0627\u0644\u0631\u0651\u064e\u062d\u0650\u064a\u0645\u0650';
@@ -154,17 +159,54 @@ var QuranReader = (function() {
     var db = null;
     var hizbLookup = {};
 
-    // ── Construire le lookup Hizb ──
+    // ── Position linéaire (pour calcul des ثمن) ──
+    function posToLinear(s, a) {
+        var idx = 0;
+        for (var i = 1; i < s; i++) idx += SURAS[i - 1][3];
+        return idx + a;
+    }
+
+    function linearToPos(idx) {
+        for (var i = 0; i < SURAS.length; i++) {
+            if (idx <= SURAS[i][3]) return { sura: i + 1, ayah: idx };
+            idx -= SURAS[i][3];
+        }
+        return { sura: 114, ayah: SURAS[113][3] };
+    }
+
+    // ── Construire le lookup Hizb avec ثمن ──
     function buildHizbLookup() {
         hizbLookup = {};
-        for (var i = 0; i < HIZB_FLAT.length; i += 2) {
-            var s = HIZB_FLAT[i];
-            var a = HIZB_FLAT[i + 1];
-            var qIdx = i / 2;              // index du quart (0-239)
-            var hizb = Math.floor(qIdx / 4) + 1;  // Hizb 1-60
-            var quarter = qIdx % 4;        // 0=حزب, 1=ربع, 2=نصف, 3=¾
-            var juz = Math.ceil(hizb / 2);  // Juz 1-30
-            hizbLookup[s + ':' + a] = { hizb: hizb, quarter: quarter, juz: juz };
+        var totalQ = HIZB_FLAT.length / 2; // 240 quarts
+
+        // Ajouter les marqueurs de quart (indices pairs : 0,2,4,6)
+        for (var m = 0; m < totalQ; m++) {
+            var s = HIZB_FLAT[m * 2], a = HIZB_FLAT[m * 2 + 1];
+            var hizb = Math.floor(m / 4) + 1;
+            var quarter = m % 4;
+            var juz = Math.ceil(hizb / 2);
+            hizbLookup[s + ':' + a] = { hizb: hizb, eighth: quarter * 2, juz: juz };
+        }
+
+        // Calculer et ajouter les ثمن (indices impairs : 1,3,5,7)
+        for (var m = 0; m < totalQ; m++) {
+            var s1 = HIZB_FLAT[m * 2], a1 = HIZB_FLAT[m * 2 + 1];
+            var s2, a2;
+            if (m + 1 < totalQ) {
+                s2 = HIZB_FLAT[(m + 1) * 2]; a2 = HIZB_FLAT[(m + 1) * 2 + 1];
+            } else {
+                s2 = 114; a2 = 6; // fin du Coran
+            }
+            var l1 = posToLinear(s1, a1);
+            var l2 = posToLinear(s2, a2);
+            var mid = linearToPos(Math.floor((l1 + l2) / 2));
+            var hizb = Math.floor(m / 4) + 1;
+            var quarter = m % 4;
+            var juz = Math.ceil(hizb / 2);
+            var key = mid.sura + ':' + mid.ayah;
+            if (!hizbLookup[key]) {
+                hizbLookup[key] = { hizb: hizb, eighth: quarter * 2 + 1, juz: juz };
+            }
         }
     }
 
@@ -371,12 +413,12 @@ var QuranReader = (function() {
 
     // ── Rendu Hizb marker HTML ──
     function hizbMarkerHTML(info) {
-        var label = QUARTER_LABELS[info.quarter];
+        var label = EIGHTH_LABELS[info.eighth];
         var juz = Math.ceil(info.hizb / 2);
-        var cls = 'hizb-marker hizb-q-' + info.quarter;
+        var cls = 'hizb-marker hizb-e-' + info.eighth;
         var arLabel = '';
 
-        if (info.quarter === 0) {
+        if (info.eighth === 0) {
             arLabel = '\u062d\u0632\u0628 ' + toArabicNum(info.hizb);
         } else {
             arLabel = label.ar + ' \u062d\u0632\u0628 ' + toArabicNum(info.hizb);
@@ -385,7 +427,7 @@ var QuranReader = (function() {
         return '<div class="' + cls + '">' +
             '<span class="hizb-icon">\u06DE</span> ' +
             '<span class="hizb-label-ar">' + arLabel + '</span>' +
-            '<span class="hizb-label-fr">' + label.fr + ' ' + info.hizb + ' — Juz ' + juz + '</span>' +
+            '<span class="hizb-label-fr">' + label.fr + ' ' + info.hizb + ' \u2014 Juz ' + juz + '</span>' +
         '</div>';
     }
 
@@ -435,7 +477,7 @@ var QuranReader = (function() {
         // Clic sur une ayah pour sauvegarder un signet
         contentEl.addEventListener('click', function(e) {
             // Ignorer les clics sur les marqueurs Hizb
-            if (e.target.closest('.hizb-marker, .hizb-q-0, .hizb-q-1, .hizb-q-2, .hizb-q-3')) return;
+            if (e.target.closest('.hizb-marker')) return;
 
             var ayahEl = e.target.closest('.ayah');
             if (!ayahEl) return;
@@ -461,9 +503,23 @@ var QuranReader = (function() {
         setTimeout(function() { toast.classList.remove('show'); }, 2000);
     }
 
+    // ── Sauvegarde / Restauration de la position ──
+    function saveLastPosition() {
+        if (!currentSura) return;
+        var scrollY = window.scrollY || window.pageYOffset || 0;
+        var data = { sura: currentSura, scrollY: scrollY, time: Date.now() };
+        try { localStorage.setItem(LAST_POS_KEY, JSON.stringify(data)); } catch (e) { /* ignore */ }
+    }
+
+    function getLastPosition() {
+        try { return JSON.parse(localStorage.getItem(LAST_POS_KEY)) || null; }
+        catch (e) { return null; }
+    }
+
     // ── Navigation ──
     function goToSura(number, targetAyah) {
         if (number < 1 || number > 114) return;
+        saveLastPosition(); // sauvegarder la position avant de changer
         currentSura = number;
 
         // Fermer le panneau signets si ouvert
@@ -636,6 +692,33 @@ var QuranReader = (function() {
                 btn.disabled = true;
             }
         });
+
+        // ── Auto-reprise : sauvegarder la position en quittant ──
+        window.addEventListener('beforeunload', saveLastPosition);
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) saveLastPosition();
+        });
+
+        // ── Auto-reprise : restaurer la dernière position au lancement ──
+        var lastPos = getLastPosition();
+        if (lastPos && lastPos.sura) {
+            goToSura(lastPos.sura);
+            // Restaurer le scroll après le chargement de la sourate
+            var savedScrollY = lastPos.scrollY || 0;
+            if (savedScrollY > 0) {
+                var checkInterval = setInterval(function() {
+                    var content = document.getElementById('reading-content');
+                    if (content && !content.querySelector('.loading-quran')) {
+                        clearInterval(checkInterval);
+                        setTimeout(function() {
+                            window.scrollTo(0, savedScrollY);
+                        }, 50);
+                    }
+                }, 100);
+                // Timeout de sécurité
+                setTimeout(function() { clearInterval(checkInterval); }, 5000);
+            }
+        }
     }
 
     return {
