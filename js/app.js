@@ -141,8 +141,20 @@ var App = (function () {
         }
     }
 
+    // Détecte si on est dans l'app native macOS (WKWebView)
+    function isNativeApp() {
+        return !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.requestLocation);
+    }
+
     // Géolocalisation manuelle (bouton)
     function geolocate() {
+        // App native : demander au Swift via le pont
+        if (isNativeApp()) {
+            setStatus('Détection de votre position...', false);
+            window.webkit.messageHandlers.requestLocation.postMessage({});
+            return;
+        }
+
         if (!navigator.geolocation) {
             setStatus('Géolocalisation non disponible. Sélectionnez une ville.', true);
             return;
@@ -172,9 +184,12 @@ var App = (function () {
         // Charger immédiatement avec la ville par défaut (Rabat)
         onCityChange();
 
+        // App native : Swift injectera la position via App.applyPosition()
+        if (isNativeApp()) return;
+
         if (!navigator.geolocation) return;
 
-        // Tenter la géolocalisation en arrière-plan
+        // Navigateur web : tenter la géolocalisation en arrière-plan
         navigator.geolocation.getCurrentPosition(
             function (pos) {
                 var lat = Math.round(pos.coords.latitude * 10000) / 10000;
