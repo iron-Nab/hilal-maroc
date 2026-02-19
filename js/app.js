@@ -167,15 +167,14 @@ var App = (function () {
         );
     }
 
-    // Auto-géolocalisation au lancement (silencieuse, fallback Rabat)
+    // Auto-géolocalisation au lancement (charge Rabat d'abord, puis met à jour si position trouvée)
     function autoGeolocate() {
-        if (!navigator.geolocation) {
-            onCityChange(); // Fallback Rabat
-            return;
-        }
+        // Charger immédiatement avec la ville par défaut (Rabat)
+        onCityChange();
 
-        setStatus('Détection de votre position...', false);
+        if (!navigator.geolocation) return;
 
+        // Tenter la géolocalisation en arrière-plan
         navigator.geolocation.getCurrentPosition(
             function (pos) {
                 var lat = Math.round(pos.coords.latitude * 10000) / 10000;
@@ -183,10 +182,9 @@ var App = (function () {
                 applyPosition(lat, lon);
             },
             function () {
-                // Silencieux : fallback sur la ville par défaut (Rabat)
-                onCityChange();
+                // Silencieux : on garde la ville par défaut déjà chargée
             },
-            { enableHighAccuracy: false, timeout: 8000, maximumAge: 300000 }
+            { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
         );
     }
 
