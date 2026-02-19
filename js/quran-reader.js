@@ -587,7 +587,19 @@ var QuranReader = (function() {
         document.getElementById('view-reading').style.display = 'none';
         var panel = document.getElementById('bookmarks-panel');
         if (panel) panel.classList.remove('open');
-        window.scrollTo(0, 0);
+
+        // Mettre en surbrillance la sourate en cours
+        var items = document.querySelectorAll('.sura-item');
+        items.forEach(function(item) { item.classList.remove('sura-active'); });
+        if (currentSura) {
+            var activeItem = document.querySelector('.sura-item[data-sura="' + currentSura + '"]');
+            if (activeItem) {
+                activeItem.classList.add('sura-active');
+                setTimeout(function() {
+                    activeItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            }
+        }
     }
 
     function resumeReading() {

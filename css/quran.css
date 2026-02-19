@@ -195,6 +195,12 @@ body {
 }
 .sura-item:active { transform: scale(0.99); }
 
+.sura-item.sura-active {
+    border-left: 4px solid var(--accent);
+    background: linear-gradient(90deg, rgba(201,168,76,0.12), var(--bg-card));
+    box-shadow: 0 2px 12px rgba(201,168,76,0.25);
+}
+
 .sura-number {
     width: 42px;
     height: 42px;
