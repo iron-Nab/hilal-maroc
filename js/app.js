@@ -308,12 +308,64 @@ var App = (function () {
         }
     }
 
+    // --- Weather ---
+    function renderWeather(lat, lon) {
+        Weather.fetch(lat, lon, function (err, data) {
+            var section = el('weather-section');
+            if (err || !data || !data.current || !data.daily) {
+                section.style.display = 'none';
+                return;
+            }
+
+            section.style.display = 'block';
+            var cur = data.current;
+            var daily = data.daily;
+            var wmo = Weather.getWMO(cur.weather_code);
+
+            // Météo actuelle
+            var html = '';
+            html += '<div class="weather-icon-main">' + wmo.icon + '</div>';
+            html += '<div class="weather-temp-block">';
+            html += '<div class="weather-temp">' + Math.round(cur.temperature_2m) + '°C</div>';
+            html += '<div class="weather-feels">Ressenti ' + Math.round(cur.apparent_temperature) + '°C</div>';
+            html += '<div class="weather-desc">' + wmo.fr + '</div>';
+            html += '</div>';
+            html += '<div class="weather-details">';
+            html += '<div class="weather-detail-item"><span class="weather-detail-icon">💧</span> ' + cur.relative_humidity_2m + '%</div>';
+            html += '<div class="weather-detail-item"><span class="weather-detail-icon">💨</span> ' + Math.round(cur.wind_speed_10m) + ' km/h ' + Weather.windDirection(cur.wind_direction_10m) + '</div>';
+            html += '</div>';
+            el('weather-current').innerHTML = html;
+
+            // Prévisions 7 jours
+            var today = new Date().toISOString().slice(0, 10);
+            var forecastHtml = '';
+            for (var i = 0; i < daily.time.length; i++) {
+                var dayWmo = Weather.getWMO(daily.weather_code[i]);
+                var isToday = daily.time[i] === today;
+                forecastHtml += '<div class="weather-day' + (isToday ? ' weather-today' : '') + '">';
+                forecastHtml += '<div class="weather-day-name">' + (isToday ? "Auj." : Weather.dayName(daily.time[i])) + '</div>';
+                forecastHtml += '<div class="weather-day-date">' + Weather.shortDate(daily.time[i]) + '</div>';
+                forecastHtml += '<div class="weather-day-icon">' + dayWmo.icon + '</div>';
+                forecastHtml += '<div class="weather-day-temps">';
+                forecastHtml += '<span class="weather-day-max">' + Math.round(daily.temperature_2m_max[i]) + '°</span>';
+                forecastHtml += '<span class="weather-day-min">' + Math.round(daily.temperature_2m_min[i]) + '°</span>';
+                forecastHtml += '</div>';
+                if (daily.precipitation_probability_max[i] > 0) {
+                    forecastHtml += '<div class="weather-day-rain">💧 ' + daily.precipitation_probability_max[i] + '%</div>';
+                }
+                forecastHtml += '</div>';
+            }
+            el('weather-forecast').innerHTML = forecastHtml;
+        });
+    }
+
     // --- Main computation ---
     function computeAndRender(lat, lon) {
         state.lat = lat;
         state.lon = lon;
 
         renderPrayerTimes(lat, lon);
+        renderWeather(lat, lon);
         showLoading();
 
         setTimeout(function () {

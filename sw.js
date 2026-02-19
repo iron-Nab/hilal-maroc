@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hilal-maroc-v9';
+const CACHE_NAME = 'hilal-maroc-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -14,6 +14,7 @@ const ASSETS = [
   './js/hijri.js',
   './js/hadith.js',
   './js/mawaid.js',
+  './js/weather.js',
   './js/history.js',
   './js/app.js',
   './js/quran-reader.js',

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Hilal Maroc - Observation du Croissant Lunaire</title>
-    <link rel="stylesheet" href="css/style.css?v=5">
+    <link rel="stylesheet" href="css/style.css?v=6">
     <!-- PWA -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
@@ -91,6 +91,16 @@
 
     <!-- Main Content -->
     <main class="main">
+
+        <!-- Météo -->
+        <section class="weather-section" id="weather-section">
+            <h2 class="section-title">Météo — Prévisions 7 jours</h2>
+            <div class="weather-card">
+                <div class="weather-current" id="weather-current"></div>
+                <div class="weather-forecast" id="weather-forecast"></div>
+                <div class="weather-source">Données : ECMWF via Open-Meteo — mise à jour automatique</div>
+            </div>
+        </section>
 
         <!-- Hadith du Jour -->
         <section class="hadith-section" id="hadith-section">
@@ -202,8 +212,9 @@
     <script src="js/hijri.js?v=5"></script>
     <script src="js/hadith.js?v=5"></script>
     <script src="js/mawaid.js?v=5"></script>
+    <script src="js/weather.js?v=1"></script>
     <script src="js/history.js?v=5"></script>
-    <script src="js/app.js?v=6"></script>
+    <script src="js/app.js?v=7"></script>
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js');
