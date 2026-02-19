@@ -472,10 +472,35 @@ var QuranReader = (function() {
                 '</span> ';
         }
 
+        // Navigation bas de sourate (lecture continue)
+        html += '<div class="sura-bottom-nav">';
+        if (suraNum > 1) {
+            var prev = SURAS[suraNum - 2];
+            html += '<button class="sura-bottom-btn sura-bottom-prev" data-sura="' + (suraNum - 1) + '">' +
+                '<span class="sura-bottom-arrow">\u2192</span>' +
+                '<span class="sura-bottom-label">' + prev[1] + '</span>' +
+            '</button>';
+        } else {
+            html += '<span></span>';
+        }
+        if (suraNum < 114) {
+            var next = SURAS[suraNum];
+            html += '<button class="sura-bottom-btn sura-bottom-next" data-sura="' + (suraNum + 1) + '">' +
+                '<span class="sura-bottom-label">' + next[1] + '</span>' +
+                '<span class="sura-bottom-arrow">\u2190</span>' +
+            '</button>';
+        }
+        html += '</div>';
+
         contentEl.innerHTML = html;
 
-        // Clic sur une ayah pour sauvegarder un signet
+        // Navigation bas de sourate — clics
         contentEl.addEventListener('click', function(e) {
+            var navBtn = e.target.closest('.sura-bottom-btn');
+            if (navBtn) {
+                goToSura(parseInt(navBtn.dataset.sura));
+                return;
+            }
             // Ignorer les clics sur les marqueurs Hizb
             if (e.target.closest('.hizb-marker')) return;
 

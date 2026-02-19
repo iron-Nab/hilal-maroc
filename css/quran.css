@@ -647,6 +647,47 @@ body {
 }
 .bookmark-delete:hover { background: rgba(198, 40, 40, 0.1); }
 
+/* ── Navigation bas de sourate ── */
+.sura-bottom-nav {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 2px solid var(--accent);
+    direction: ltr;
+}
+
+.sura-bottom-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    background: linear-gradient(135deg, var(--primary), var(--primary-light));
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    box-shadow: var(--shadow);
+    font-family: 'Traditional Arabic', 'Amiri', serif;
+}
+.sura-bottom-btn:hover {
+    background: var(--primary-light);
+    transform: scale(1.03);
+}
+.sura-bottom-btn:active { transform: scale(0.97); }
+
+.sura-bottom-arrow {
+    font-size: 1.2rem;
+    font-family: -apple-system, sans-serif;
+}
+
+.sura-bottom-label {
+    font-size: 1.1rem;
+}
+
 /* ── Bouton flottant retour ── */
 .fab-back {
     position: fixed;
