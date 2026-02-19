@@ -108,8 +108,7 @@ body {
 .quick-nav {
     display: flex;
     justify-content: center;
-    gap: 12px;
-    padding: 10px 16px;
+    padding: 18px 16px;
     background: linear-gradient(135deg, #0a3a2a 0%, #0d4f4f 100%);
     border-bottom: 2px solid var(--accent);
 }
@@ -117,25 +116,30 @@ body {
 .quick-nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
-    padding: 8px 20px;
-    background: rgba(255, 255, 255, 0.1);
-    color: white;
+    gap: 12px;
+    padding: 14px 36px;
+    background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.10));
+    color: #fff;
     text-decoration: none;
-    border-radius: 24px;
-    font-size: 0.9rem;
-    font-weight: 500;
-    transition: background 0.2s;
-    border: 1px solid rgba(201, 168, 76, 0.3);
+    border-radius: 30px;
+    font-size: 1.15rem;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 12px rgba(201,168,76,0.25);
+    transition: background 0.2s, box-shadow 0.2s, transform 0.15s;
 }
 .quick-nav-link:hover {
-    background: rgba(201, 168, 76, 0.2);
+    background: linear-gradient(135deg, rgba(201,168,76,0.4), rgba(201,168,76,0.2));
+    box-shadow: 0 0 20px rgba(201,168,76,0.4);
+    transform: scale(1.03);
 }
 
 .quick-nav-icon {
     font-family: 'Traditional Arabic', 'Amiri', serif;
-    font-size: 1.2rem;
+    font-size: 1.6rem;
     line-height: 1;
+    color: var(--accent);
 }
 
 /* --- Location Bar --- */
