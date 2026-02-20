@@ -852,14 +852,14 @@ var QuranReader = (function() {
         var url = AUDIO_BASE + suraNum + '.mp3';
 
         audio = new Audio();
-        audio.crossOrigin = 'anonymous';
-        audio.preload = 'metadata';
+        // Pas de crossOrigin : évite le rejet CORS depuis file:// (origin null)
+        audio.preload = 'none';
         audio.src = url;
 
         if (nameEl) nameEl.textContent = suraData[1] + ' — ' + suraData[2];
         if (fillEl) fillEl.style.width = '0%';
         if (timeEl) timeEl.textContent = '0:00 / --:--';
-        if (iconEl) iconEl.innerHTML = '&#9654;'; // ▶ en attente
+        if (iconEl) iconEl.innerHTML = '&#9654;'; // ▶
 
         audio.addEventListener('timeupdate', updateAudioUI);
         audio.addEventListener('loadedmetadata', updateAudioUI);
@@ -871,25 +871,28 @@ var QuranReader = (function() {
         });
         audio.addEventListener('error', function() {
             if (iconEl) iconEl.innerHTML = '&#9654;';
-            if (timeEl) timeEl.textContent = 'Erreur audio';
+            if (timeEl) timeEl.textContent = 'Audio indisponible';
         });
 
         playerEl.classList.add('visible');
-        audio.play().then(function() {
-            if (iconEl) iconEl.innerHTML = '&#10074;&#10074;'; // ❚❚
-        }).catch(function() {
-            // Autoplay bloqué par le navigateur — l'utilisateur cliquera Play
-            if (iconEl) iconEl.innerHTML = '&#9654;';
-        });
+        // NE PAS auto-play : laisser l'utilisateur cliquer Play
+        // (évite l'erreur NotAllowedError sur WKWebView)
     }
 
     function toggleAudioPlay() {
         if (!audio) return;
         var iconEl = document.getElementById('audio-play-icon');
         if (audio.paused) {
-            audio.play().then(function() {
+            var p = audio.play();
+            if (p && typeof p.then === 'function') {
+                p.then(function() {
+                    if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
+                }).catch(function() {
+                    if (iconEl) iconEl.innerHTML = '&#9654;';
+                });
+            } else {
                 if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
-            }).catch(function() {});
+            }
         } else {
             audio.pause();
             if (iconEl) iconEl.innerHTML = '&#9654;';
