@@ -108,6 +108,8 @@ body {
 .quick-nav {
     display: flex;
     justify-content: center;
+    flex-wrap: wrap;
+    gap: 12px;
     padding: 18px 16px;
     background: linear-gradient(135deg, #0a3a2a 0%, #0d4f4f 100%);
     border-bottom: 2px solid var(--accent);
@@ -116,13 +118,13 @@ body {
 .quick-nav-link {
     display: inline-flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 40px;
+    gap: 8px;
+    padding: 13px 28px;
     background: linear-gradient(135deg, rgba(201,168,76,0.25), rgba(201,168,76,0.10));
     color: #fff;
     text-decoration: none;
     border-radius: 30px;
-    font-size: 1.4rem;
+    font-size: 1.25rem;
     font-weight: 600;
     font-family: 'Traditional Arabic', 'Scheherazade New', 'Amiri', serif;
     border: 2px solid var(--accent);

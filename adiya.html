@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>أدعية بعد الصلاة - أنواري</title>
+    <link rel="stylesheet" href="css/adkar.css?v=1">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Anwari">
+    <meta name="theme-color" content="#0d4f4f">
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="adkar-header">
+        <div class="header-top">
+            <a href="index.html" class="btn-home" title="Retour accueil">&#8592;</a>
+            <h1>أدعية</h1>
+        </div>
+        <p class="subtitle">أدعية ما بعد الصلاة من الأحاديث الصحيحة</p>
+    </header>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-wrap" style="margin-top:0;">
+        <div class="progress-bar-inner" id="progress-bar"></div>
+        <span class="progress-label" id="progress-label">0 / 0</span>
+    </div>
+
+    <!-- Adiya List -->
+    <main class="adkar-main" id="adkar-list">
+        <!-- Rempli par JS -->
+    </main>
+
+    <!-- Reset Button -->
+    <div class="reset-wrap">
+        <button class="btn-reset" onclick="resetAll()">↺ إعادة البدء</button>
+    </div>
+
+    <script src="js/adiya-data.js?v=1"></script>
+    <script>
+    var counters = {};
+    var STORAGE_KEY = 'adiya-state';
+
+    function loadState() {
+        try {
+            var s = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+            if (s.date === todayStr()) { counters = s.counters || {}; }
+            else { counters = {}; }
+        } catch(e) { counters = {}; }
+    }
+
+    function saveState() {
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify({ date: todayStr(), counters: counters }));
+        } catch(e) {}
+    }
+
+    function todayStr() {
+        var d = new Date();
+        return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
+    }
+
+    function renderList() {
+        var list = document.getElementById('adkar-list');
+        list.innerHTML = '';
+
+        AdiyaData.forEach(function(item, idx) {
+            var key = item.id;
+            var current = counters[key] || 0;
+            var done = current >= item.count;
+
+            var card = document.createElement('div');
+            card.className = 'adkar-card' + (done ? ' adkar-done' : '');
+            card.id = 'card-' + key;
+
+            var arabic = item.arabic.replace(/\n/g, '<br><br>');
+
+            var noteHtml = item.note
+                ? '<div class="adkar-note">« ' + item.note + ' »</div>'
+                : '';
+            var gradeHtml = item.grade
+                ? '<span class="adkar-grade">' + item.grade + '</span>'
+                : '';
+
+            card.innerHTML =
+                '<div class="adkar-num">' + (idx + 1) + '</div>' +
+                '<div class="adkar-title">' + item.title + '</div>' +
+                '<div class="adkar-arabic">' + arabic + '</div>' +
+                noteHtml +
+                '<div class="adkar-footer">' +
+                    '<div class="adkar-source">' +
+                        gradeHtml +
+                        '<span class="adkar-source-name">' + item.source + '</span>' +
+                        '<span class="adkar-source-num">(' + item.source_num + ')</span>' +
+                    '</div>' +
+                    '<div class="adkar-counter-wrap">' +
+                        '<div class="adkar-counter-display" id="cnt-' + key + '">' +
+                            (item.count > 1
+                                ? (current + ' / ' + item.count)
+                                : (done ? '✓' : '—')
+                            ) +
+                        '</div>' +
+                        (done
+                            ? '<div class="adkar-check">&#10003; تمّ</div>'
+                            : '<button class="btn-count" onclick="increment(\'' + key + '\',' + item.count + ')">' +
+                                (item.count === 1 ? 'تمّ' : 'سُبِّح') +
+                              '</button>'
+                        ) +
+                    '</div>' +
+                '</div>';
+
+            list.appendChild(card);
+        });
+
+        updateProgress();
+    }
+
+    function increment(key, maxCount) {
+        counters[key] = (counters[key] || 0) + 1;
+        if (counters[key] > maxCount) counters[key] = maxCount;
+        saveState();
+
+        var item = AdiyaData.find(function(i) { return i.id === key; });
+        var current = counters[key];
+        var done = current >= maxCount;
+
+        var cntEl = document.getElementById('cnt-' + key);
+        if (cntEl) {
+            cntEl.textContent = maxCount > 1
+                ? (current + ' / ' + maxCount)
+                : (done ? '✓' : '—');
+        }
+
+        if (done) {
+            var card = document.getElementById('card-' + key);
+            if (card) {
+                card.classList.add('adkar-done');
+                var wrap = card.querySelector('.adkar-counter-wrap');
+                if (wrap) {
+                    var btn = wrap.querySelector('.btn-count');
+                    if (btn) btn.outerHTML = '<div class="adkar-check">&#10003; تمّ</div>';
+                }
+                setTimeout(function() {
+                    var next = card.nextElementSibling;
+                    if (next) next.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 300);
+            }
+        }
+
+        updateProgress();
+    }
+
+    function updateProgress() {
+        var done = 0;
+        AdiyaData.forEach(function(item) {
+            if ((counters[item.id] || 0) >= item.count) done++;
+        });
+        var total = AdiyaData.length;
+        var pct = total > 0 ? Math.round(done / total * 100) : 0;
+        document.getElementById('progress-bar').style.width = pct + '%';
+        document.getElementById('progress-label').textContent = done + ' / ' + total;
+    }
+
+    function resetAll() {
+        AdiyaData.forEach(function(item) { delete counters[item.id]; });
+        saveState();
+        renderList();
+    }
+
+    loadState();
+    renderList();
+    </script>
+</body>
+</html>
