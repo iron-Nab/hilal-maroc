@@ -903,6 +903,7 @@ var QuranReader = (function() {
         if (audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
 
         audioCurrentAyahNum = ayahNum;
+        saveAudioPosition(); // sauvegarder dès le début de chaque ayah
         audioLoading = true;
         if (timeEl) timeEl.textContent = 'Chargement…';
         if (iconEl) iconEl.innerHTML = '&#9654;';
@@ -912,10 +913,7 @@ var QuranReader = (function() {
             if (suraNum !== audioCurrentSura || ayahNum !== audioCurrentAyahNum) return;
             audioLoading = false;
             audio.addEventListener('loadedmetadata', updateAudioUI);
-            audio.addEventListener('timeupdate', function() {
-                updateAudioUI();
-                if (Math.floor(audio.currentTime) % 5 === 0) saveAudioPosition();
-            });
+            audio.addEventListener('timeupdate', updateAudioUI);
             audio.addEventListener('ended', function() {
                 if (suraNum !== audioCurrentSura) return;
                 if (audioPlaying) {
@@ -1065,8 +1063,10 @@ var QuranReader = (function() {
         init: init,
         goToSura: goToSura,
         goToList: goToList,
-        resumeReading: resumeReading
+        resumeReading: resumeReading,
+        savePos: saveAudioPosition
     };
 })();
 
 document.addEventListener('DOMContentLoaded', QuranReader.init);
+window.addEventListener('beforeunload', function() { QuranReader.savePos && QuranReader.savePos(); });
