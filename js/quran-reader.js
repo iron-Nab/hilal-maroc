@@ -12,12 +12,8 @@ var QuranReader = (function() {
     var LAST_POS_KEY = 'quran-last-position';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
-    // Scheme natif quranaud:// (proxifié par Swift) → HTTPS quranicaudio.com
-    // Sur le web, utiliser directement HTTPS
-    var isNative = !!(window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.requestLocation);
-    var AUDIO_BASE = isNative
-        ? 'quranaud://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/'
-        : 'https://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/';
+    // Audio Warsh — depuis app:// les requêtes HTTPS passent sans restriction
+    var AUDIO_BASE = 'https://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/';
 
     // ── Audio state ──
     var audio = null;
