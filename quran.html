@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Coran Warsh - Anwari</title>
-    <link rel="stylesheet" href="css/quran.css?v=2">
+    <link rel="stylesheet" href="css/quran.css?v=3">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -91,7 +91,24 @@
     <!-- Toast -->
     <div class="toast" id="toast"></div>
 
-    <script src="js/quran-reader.js?v=2"></script>
+    <!-- Lecteur Audio Sourate -->
+    <div class="audio-player" id="audio-player">
+        <button class="audio-play-btn" id="audio-play-btn" aria-label="Lecture / Pause">
+            <span id="audio-play-icon">&#9654;</span>
+        </button>
+        <div class="audio-center">
+            <div class="audio-sura-name" id="audio-sura-name"></div>
+            <div class="audio-progress-wrap">
+                <div class="audio-progress-bar" id="audio-progress-bar">
+                    <div class="audio-progress-fill" id="audio-progress-fill"></div>
+                </div>
+                <div class="audio-time" id="audio-time">0:00 / --:--</div>
+            </div>
+        </div>
+        <button class="audio-close-btn" id="audio-close-btn" aria-label="Fermer">&#10005;</button>
+    </div>
+
+    <script src="js/quran-reader.js?v=3"></script>
     <script>
     if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('./sw.js');

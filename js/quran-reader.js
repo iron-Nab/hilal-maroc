@@ -12,6 +12,11 @@ var QuranReader = (function() {
     var LAST_POS_KEY = 'quran-last-position';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
+    var AUDIO_BASE = 'https://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/';
+
+    // ── Audio state ──
+    var audio = null;
+    var audioCurrentSura = 0;
 
     // 114 sourates : [numéro, nom arabe, nom latin, nombre ayahs, mecquoise(0)/médinoise(1)]
     var SURAS = [
@@ -560,6 +565,7 @@ var QuranReader = (function() {
 
         fetchSura(number).then(function(ayahs) {
             renderReading(number, ayahs);
+            initAudio(number);
             window.scrollTo(0, 0);
 
             // Scroller vers l'ayah cible si spécifiée
@@ -583,6 +589,7 @@ var QuranReader = (function() {
     }
 
     function goToList() {
+        stopAudio();
         document.getElementById('view-list').style.display = 'block';
         document.getElementById('view-reading').style.display = 'none';
         var panel = document.getElementById('bookmarks-panel');
@@ -730,6 +737,16 @@ var QuranReader = (function() {
             }
         });
 
+        // ── Lecteur Audio ──
+        var playBtn = document.getElementById('audio-play-btn');
+        if (playBtn) playBtn.addEventListener('click', toggleAudioPlay);
+
+        var closeBtn = document.getElementById('audio-close-btn');
+        if (closeBtn) closeBtn.addEventListener('click', stopAudio);
+
+        var progressBar = document.getElementById('audio-progress-bar');
+        if (progressBar) progressBar.addEventListener('click', seekAudio);
+
         // ── Auto-reprise : sauvegarder la position en quittant ──
         window.addEventListener('beforeunload', saveLastPosition);
         document.addEventListener('visibilitychange', function() {
@@ -756,6 +773,104 @@ var QuranReader = (function() {
                 setTimeout(function() { clearInterval(checkInterval); }, 5000);
             }
         }
+    }
+
+    // ── Audio Player ──
+    function padSura(n) {
+        return ('000' + n).slice(-3);
+    }
+
+    function formatAudioTime(s) {
+        if (!isFinite(s)) return '--:--';
+        var m = Math.floor(s / 60);
+        var sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+    }
+
+    function updateAudioUI() {
+        if (!audio) return;
+        var fill = document.getElementById('audio-progress-fill');
+        var timeEl = document.getElementById('audio-time');
+        var dur = audio.duration || 0;
+        var cur = audio.currentTime || 0;
+        if (fill && dur > 0) fill.style.width = (cur / dur * 100) + '%';
+        if (timeEl) timeEl.textContent = formatAudioTime(cur) + ' / ' + formatAudioTime(dur);
+    }
+
+    function initAudio(suraNum) {
+        var playerEl = document.getElementById('audio-player');
+        var nameEl = document.getElementById('audio-sura-name');
+        var fillEl = document.getElementById('audio-progress-fill');
+        var timeEl = document.getElementById('audio-time');
+        var iconEl = document.getElementById('audio-play-icon');
+        if (!playerEl) return;
+
+        // Si même sourate déjà chargée, juste afficher le player
+        if (audioCurrentSura === suraNum && audio) {
+            playerEl.classList.add('visible');
+            return;
+        }
+
+        // Nouvelle sourate
+        if (audio) {
+            audio.pause();
+            audio.src = '';
+        }
+
+        audioCurrentSura = suraNum;
+        var suraData = SURAS[suraNum - 1];
+        var url = AUDIO_BASE + padSura(suraNum) + '.mp3';
+
+        audio = new Audio();
+        audio.preload = 'metadata';
+        audio.src = url;
+
+        if (nameEl) nameEl.textContent = suraData[1] + ' — ' + suraData[2];
+        if (fillEl) fillEl.style.width = '0%';
+        if (timeEl) timeEl.textContent = '0:00 / --:--';
+        if (iconEl) iconEl.textContent = '❚❚';
+
+        audio.addEventListener('timeupdate', updateAudioUI);
+        audio.addEventListener('ended', function() {
+            if (iconEl) iconEl.textContent = '▶';
+            if (fillEl) fillEl.style.width = '0%';
+        });
+        audio.addEventListener('loadedmetadata', updateAudioUI);
+
+        playerEl.classList.add('visible');
+        audio.play().catch(function() {
+            // Autoplay bloqué : l'utilisateur cliquera sur play
+            if (iconEl) iconEl.textContent = '▶';
+        });
+    }
+
+    function toggleAudioPlay() {
+        if (!audio) return;
+        var iconEl = document.getElementById('audio-play-icon');
+        if (audio.paused) {
+            audio.play();
+            if (iconEl) iconEl.textContent = '❚❚';
+        } else {
+            audio.pause();
+            if (iconEl) iconEl.textContent = '▶';
+        }
+    }
+
+    function stopAudio() {
+        var playerEl = document.getElementById('audio-player');
+        if (audio) {
+            audio.pause();
+        }
+        if (playerEl) playerEl.classList.remove('visible');
+    }
+
+    function seekAudio(e) {
+        if (!audio || !audio.duration) return;
+        var bar = document.getElementById('audio-progress-bar');
+        if (!bar) return;
+        var rect = bar.getBoundingClientRect();
+        var ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        audio.currentTime = ratio * audio.duration;
     }
 
     return {
