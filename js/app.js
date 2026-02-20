@@ -30,6 +30,10 @@ var App = (function () {
             if (e.key === 'Enter') onCalculate();
         });
 
+        // Sections repliables
+        setupToggle('history-toggle', 'history-content', 'history-arrow');
+        setupToggle('predictions-toggle', 'predictions-content', 'predictions-arrow');
+
         // Show current Hijri date
         updateHijriDate();
 
@@ -39,6 +43,19 @@ var App = (function () {
 
         // Auto-géolocalisation au lancement, fallback sur Rabat
         autoGeolocate();
+    }
+
+    // --- Sections repliables ---
+    function setupToggle(toggleId, contentId, arrowId) {
+        var toggle = el(toggleId);
+        var content = el(contentId);
+        var arrow = el(arrowId);
+        if (!toggle || !content) return;
+        toggle.addEventListener('click', function () {
+            var isOpen = content.style.display !== 'none';
+            content.style.display = isOpen ? 'none' : 'block';
+            if (arrow) arrow.classList.toggle('open', !isOpen);
+        });
     }
 
     // --- City Selector ---

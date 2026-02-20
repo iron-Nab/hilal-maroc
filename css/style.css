@@ -279,6 +279,32 @@ body {
     font-weight: 600;
 }
 
+.section-toggle {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.8rem;
+    border-radius: 8px;
+    transition: background 0.2s;
+    user-select: none;
+}
+
+.section-toggle:hover {
+    background: rgba(13, 79, 79, 0.06);
+}
+
+.toggle-arrow {
+    font-size: 0.7rem;
+    transition: transform 0.25s ease;
+    color: var(--text-light);
+    display: inline-block;
+}
+
+.toggle-arrow.open {
+    transform: rotate(90deg);
+}
+
 /* --- Criteria Legend --- */
 .criteria-legend {
     background: var(--bg-card);

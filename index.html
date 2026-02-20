@@ -149,45 +149,55 @@
             </div>
         </section>
 
-        <!-- Historique des Observations -->
+        <!-- Historique des Observations (repliable) -->
         <section class="history-section" id="history-section">
-            <h2 class="section-title">&#128197; Historique des Observations — <span id="history-year"></span></h2>
-            <div class="history-summary" id="history-summary"></div>
-            <div class="history-table-wrap">
-                <table class="history-table" id="history-table">
-                    <thead>
-                        <tr>
-                            <th>Mois Hijri</th>
-                            <th>Nouvelle Lune</th>
-                            <th>Date d'observation</th>
-                            <th>Statut</th>
-                            <th>Détails</th>
-                        </tr>
-                    </thead>
-                    <tbody id="history-tbody">
-                        <!-- Rempli par JS -->
-                    </tbody>
-                </table>
+            <h2 class="section-title section-toggle" id="history-toggle">
+                <span class="toggle-arrow" id="history-arrow">&#9654;</span>
+                &#128197; Historique des Observations — <span id="history-year"></span>
+            </h2>
+            <div class="history-content" id="history-content" style="display:none;">
+                <div class="history-summary" id="history-summary"></div>
+                <div class="history-table-wrap">
+                    <table class="history-table" id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Mois Hijri</th>
+                                <th>Nouvelle Lune</th>
+                                <th>Date d'observation</th>
+                                <th>Statut</th>
+                                <th>Détails</th>
+                            </tr>
+                        </thead>
+                        <tbody id="history-tbody">
+                            <!-- Rempli par JS -->
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
-        <h2 class="section-title">Prédictions du Hilal — 12 prochains mois</h2>
+        <h2 class="section-title section-toggle" id="predictions-toggle">
+            <span class="toggle-arrow" id="predictions-arrow">&#9654;</span>
+            Prédictions du Hilal — 12 prochains mois
+        </h2>
 
-        <!-- Morocco criteria legend -->
-        <div class="criteria-legend">
-            <div class="criteria-title">Critères d'observation (Maroc)</div>
-            <div class="criteria-items">
-                <span class="criteria-item">Âge lune &ge; 20h</span>
-                <span class="criteria-item">Durée apparition &ge; 29 min</span>
-                <span class="criteria-item">Élongation &ge; 6°</span>
-                <span class="criteria-item">Lune au-dessus de l'horizon</span>
+        <div id="predictions-content" style="display:none;">
+            <!-- Morocco criteria legend -->
+            <div class="criteria-legend">
+                <div class="criteria-title">Critères d'observation (Maroc)</div>
+                <div class="criteria-items">
+                    <span class="criteria-item">Âge lune &ge; 20h</span>
+                    <span class="criteria-item">Durée apparition &ge; 29 min</span>
+                    <span class="criteria-item">Élongation &ge; 6°</span>
+                    <span class="criteria-item">Lune au-dessus de l'horizon</span>
+                </div>
             </div>
-        </div>
 
-        <div id="results">
-            <div class="loading">
-                <div class="loading-spinner"></div>
-                <p>Calcul des prédictions du Hilal pour Rabat...</p>
+            <div id="results">
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Calcul des prédictions du Hilal pour Rabat...</p>
+                </div>
             </div>
         </div>
     </main>
