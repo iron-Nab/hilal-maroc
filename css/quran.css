@@ -388,6 +388,14 @@ body {
     50% { background: rgba(201, 168, 76, 0.15); }
 }
 
+/* Ayah actuellement lue par le lecteur audio */
+.ayah.ayah-audio-active {
+    background: rgba(13, 79, 79, 0.12);
+    border-radius: 6px;
+    box-shadow: inset 3px 0 0 var(--primary-light);
+    transition: background 0.5s;
+}
+
 .ayah-num {
     font-size: 0.85em;
     color: var(--accent);
