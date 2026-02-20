@@ -13,6 +13,22 @@ var App = (function () {
         loading: false
     };
 
+    var LOCATION_CACHE_KEY = 'app-last-gps';
+    var notifTimers = [];
+
+    function saveLocationCache(lat, lon) {
+        try { localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify({ lat: lat, lon: lon, ts: Date.now() })); } catch(e) {}
+    }
+
+    function getLocationCache() {
+        try {
+            var d = JSON.parse(localStorage.getItem(LOCATION_CACHE_KEY) || 'null');
+            if (!d) return null;
+            if (Date.now() - d.ts > 24 * 3600 * 1000) return null; // expire après 24h
+            return d;
+        } catch(e) { return null; }
+    }
+
     // --- DOM Elements ---
     function el(id) { return document.getElementById(id); }
 
@@ -133,6 +149,7 @@ var App = (function () {
 
     // Appliquer la position détectée (utilisé par geolocate et autoGeolocate)
     function applyPosition(lat, lon) {
+        saveLocationCache(lat, lon);
         var nearest = findNearestCity(lat, lon);
         if (nearest) {
             // Ville connue dans le sélecteur
@@ -196,26 +213,29 @@ var App = (function () {
         );
     }
 
-    // Auto-géolocalisation au lancement (charge Rabat d'abord, puis met à jour si position trouvée)
+    // Auto-géolocalisation au lancement
     function autoGeolocate() {
-        // Charger immédiatement avec la ville par défaut (Rabat)
-        onCityChange();
-
         // App native : Swift injectera la position via App.applyPosition()
-        if (isNativeApp()) return;
+        if (isNativeApp()) { onCityChange(); return; }
+
+        // Restaurer immédiatement depuis le cache localStorage (position de la dernière visite)
+        var cached = getLocationCache();
+        if (cached) {
+            applyPosition(cached.lat, cached.lon);
+        } else {
+            onCityChange(); // Fallback : ville par défaut (Rabat)
+        }
 
         if (!navigator.geolocation) return;
 
-        // Navigateur web : tenter la géolocalisation en arrière-plan
+        // Rafraîchir en arrière-plan avec la position réelle
         navigator.geolocation.getCurrentPosition(
             function (pos) {
                 var lat = Math.round(pos.coords.latitude * 10000) / 10000;
                 var lon = Math.round(pos.coords.longitude * 10000) / 10000;
                 applyPosition(lat, lon);
             },
-            function () {
-                // Silencieux : on garde la ville par défaut déjà chargée
-            },
+            function () { /* silencieux — on garde la position en cache */ },
             { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
         );
     }
@@ -322,6 +342,56 @@ var App = (function () {
                 });
             }
             window.webkit.messageHandlers.prayerTimes.postMessage({ prayers: nativeData });
+        }
+
+        // Notifications web (navigateur / PWA iPhone)
+        scheduleWebNotifications(prayers, tzOffset);
+    }
+
+    // Programmer les notifications navigateur 5 min avant chaque prière
+    function scheduleWebNotifications(prayers, tzOffset) {
+        if (isNativeApp()) return; // géré par Swift
+        if (!('Notification' in window)) return;
+
+        // Annuler les timers précédents
+        for (var t = 0; t < notifTimers.length; t++) clearTimeout(notifTimers[t]);
+        notifTimers = [];
+
+        function schedule() {
+            var nowMs = Date.now();
+            for (var i = 0; i < prayers.length; i++) {
+                var p = prayers[i];
+                if (!p.isPrayer || p.ut === null) continue;
+                var totalMin = Math.round(p.ut * 60) + tzOffset;
+                if (totalMin < 0) totalMin += 1440;
+                if (totalMin >= 1440) totalMin -= 1440;
+                var h = Math.floor(totalMin / 60);
+                var m = totalMin % 60;
+                var prayerMs = new Date().setHours(h, m, 0, 0);
+                var notifMs  = prayerMs - 5 * 60 * 1000;
+                var delay    = notifMs - nowMs;
+                if (delay <= 0) continue;
+                (function(prayer, hh, mm) {
+                    notifTimers.push(setTimeout(function() {
+                        if (Notification.permission === 'granted') {
+                            new Notification(prayer.nameAr + '  •  ' + prayer.name, {
+                                body: 'Athan dans 5 minutes — ' +
+                                      (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm,
+                                icon: 'icons/icon-192.png',
+                                tag:  'prayer-' + prayer.name
+                            });
+                        }
+                    }, delay));
+                })(p, h, m);
+            }
+        }
+
+        if (Notification.permission === 'granted') {
+            schedule();
+        } else if (Notification.permission !== 'denied') {
+            Notification.requestPermission().then(function(perm) {
+                if (perm === 'granted') schedule();
+            });
         }
     }
 
