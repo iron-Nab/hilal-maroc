@@ -10,14 +10,23 @@ var QuranReader = (function() {
     var STORE_NAME = 'suras';
     var BOOKMARKS_KEY = 'quran-bookmarks';
     var LAST_POS_KEY = 'quran-last-position';
+    var AUDIO_POS_KEY = 'quran-audio-positions';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
-    // Audio Warsh — depuis app:// les requêtes HTTPS passent sans restriction
-    var AUDIO_BASE = 'https://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/';
+    // Audio — Saad Al-Ghamidi — fichiers par ayah, couverture complète 114 sourates
+    var AUDIO_AYAH_BASE = 'https://everyayah.com/data/Ghamadi_40kbps/';
+    // Dans WKWebView (scheme app://) fetch+blob est requis car <audio src="https://"> est bloqué.
+    // Dans un vrai navigateur, new Audio(url) suffit (pas de CORS requis pour les éléments audio).
+    var USE_FETCH_BLOB = (window.location.protocol === 'app:');
 
     // ── Audio state ──
     var audio = null;
+    var audioBlobUrl = null;
+    var audioLoading = false;
+    var audioPlayOnReady = false;
+    var audioPlaying = false;       // doit-on avancer automatiquement à l'ayah suivante
     var audioCurrentSura = 0;
+    var audioCurrentAyahNum = 0;    // ayah en cours de lecture (1-based)
     var audioNumAyahs = 0;
     var audioHighlightedAyah = 0;
 
@@ -509,14 +518,28 @@ var QuranReader = (function() {
                 goToSura(parseInt(navBtn.dataset.sura));
                 return;
             }
-            // Ignorer les clics sur les marqueurs Hizb
             if (e.target.closest('.hizb-marker')) return;
 
             var ayahEl = e.target.closest('.ayah');
             if (!ayahEl) return;
             var num = parseInt(ayahEl.id.replace('ayah-', ''));
-            addBookmark(suraNum, num);
-            ayahEl.classList.add('bookmarked');
+
+            // Clic sur le badge ﴿N﴾ → signet
+            if (e.target.closest('.ayah-num')) {
+                addBookmark(suraNum, num);
+                ayahEl.classList.add('bookmarked');
+                return;
+            }
+
+            // Clic sur le texte → sauter à cette ayah (lecture si déjà en cours)
+            if (audioCurrentSura === suraNum) {
+                var wasPlaying = audioPlaying || (audio && !audio.paused);
+                loadAyah(suraNum, num, wasPlaying);
+            } else {
+                // Pas d'audio actif → signet par défaut
+                addBookmark(suraNum, num);
+                ayahEl.classList.add('bookmarked');
+            }
         });
 
         // Navigation prev/next
@@ -778,8 +801,38 @@ var QuranReader = (function() {
         }
     }
 
-    // ── Audio Player ──
+    // ── Audio Player (par ayah — synchronisation exacte) ──
     function padSura(n) { return ('000' + n).slice(-3); }
+    function padAyah(n) { return ('000' + n).slice(-3); }
+
+    function getAyahUrl(suraNum, ayahNum) {
+        return AUDIO_AYAH_BASE + padSura(suraNum) + padAyah(ayahNum) + '.mp3';
+    }
+
+    function saveAudioPosition() {
+        if (!audioCurrentSura || !audioCurrentAyahNum) return;
+        try {
+            var pos = JSON.parse(localStorage.getItem(AUDIO_POS_KEY) || '{}');
+            if (audioCurrentAyahNum <= 1) {
+                delete pos[audioCurrentSura];
+            } else {
+                pos[audioCurrentSura] = audioCurrentAyahNum;
+            }
+            localStorage.setItem(AUDIO_POS_KEY, JSON.stringify(pos));
+        } catch(e) {}
+    }
+
+    function getSavedAyah(suraNum) {
+        try {
+            var pos = JSON.parse(localStorage.getItem(AUDIO_POS_KEY) || '{}');
+            return pos[suraNum] || 1;
+        } catch(e) { return 1; }
+    }
+
+    function setFabAbovePlayer(visible) {
+        var fab = document.getElementById('fab-back');
+        if (fab) fab.style.bottom = visible ? '90px' : '24px';
+    }
 
     function formatAudioTime(s) {
         if (!isFinite(s) || s < 0) return '--:--';
@@ -800,9 +853,8 @@ var QuranReader = (function() {
         var el = document.getElementById('ayah-' + ayahNum);
         if (!el) return;
         el.classList.add('ayah-audio-active');
-        // Scroll doux si l'ayah n'est pas visible
         var rect = el.getBoundingClientRect();
-        var margin = 120; // espace pour le player fixe en bas
+        var margin = 120;
         if (rect.bottom > window.innerHeight - margin || rect.top < 80) {
             el.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
@@ -814,14 +866,107 @@ var QuranReader = (function() {
         var timeEl = document.getElementById('audio-time');
         var dur = audio.duration || 0;
         var cur = audio.currentTime || 0;
-        if (fill && dur > 0) fill.style.width = (cur / dur * 100) + '%';
-        if (timeEl) timeEl.textContent = formatAudioTime(cur) + ' / ' + formatAudioTime(dur);
+        // Progression globale sur la sourate entière
+        if (fill && dur > 0 && audioNumAyahs > 0) {
+            var overall = ((audioCurrentAyahNum - 1) + cur / dur) / audioNumAyahs * 100;
+            fill.style.width = overall + '%';
+        }
+        if (timeEl && dur > 0) {
+            timeEl.textContent = formatAudioTime(cur) + ' / ' + formatAudioTime(dur);
+        }
+    }
 
-        // Synchronisation proportionnelle : estimer l'ayah en cours
-        if (dur > 0 && audioNumAyahs > 0) {
-            var idx = Math.floor(cur / dur * audioNumAyahs); // 0-based
-            idx = Math.max(0, Math.min(audioNumAyahs - 1, idx));
-            highlightAyah(idx + 1); // ayah IDs sont 1-based
+    // Charge et (optionnellement) lit l'ayah N de la sourate
+    function loadAyah(suraNum, ayahNum, play) {
+        if (suraNum !== audioCurrentSura) return;
+        var timeEl   = document.getElementById('audio-time');
+        var iconEl   = document.getElementById('audio-play-icon');
+        var fillEl   = document.getElementById('audio-progress-fill');
+
+        // Fin de sourate
+        if (ayahNum < 1 || ayahNum > audioNumAyahs) {
+            audioPlaying = false;
+            clearAyahHighlight();
+            audioHighlightedAyah = 0;
+            if (iconEl) iconEl.innerHTML = '&#9654;';
+            if (fillEl) fillEl.style.width = '100%';
+            try {
+                var p2 = JSON.parse(localStorage.getItem(AUDIO_POS_KEY) || '{}');
+                delete p2[suraNum];
+                localStorage.setItem(AUDIO_POS_KEY, JSON.stringify(p2));
+            } catch(e) {}
+            return;
+        }
+
+        // Arrêter l'ayah précédente
+        if (audio) { audio.pause(); audio.src = ''; audio = null; }
+        if (audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
+
+        audioCurrentAyahNum = ayahNum;
+        audioLoading = true;
+        if (timeEl) timeEl.textContent = 'Chargement…';
+        if (iconEl) iconEl.innerHTML = '&#9654;';
+        highlightAyah(ayahNum);
+
+        function onAudioReady() {
+            if (suraNum !== audioCurrentSura || ayahNum !== audioCurrentAyahNum) return;
+            audioLoading = false;
+            audio.addEventListener('loadedmetadata', updateAudioUI);
+            audio.addEventListener('timeupdate', function() {
+                updateAudioUI();
+                if (Math.floor(audio.currentTime) % 5 === 0) saveAudioPosition();
+            });
+            audio.addEventListener('ended', function() {
+                if (suraNum !== audioCurrentSura) return;
+                if (audioPlaying) {
+                    loadAyah(suraNum, ayahNum + 1, true);
+                } else {
+                    if (iconEl) iconEl.innerHTML = '&#9654;';
+                }
+            });
+            audio.addEventListener('error', function() {
+                audioLoading = false;
+                if (timeEl) timeEl.textContent = 'Audio indisponible';
+                if (iconEl) iconEl.innerHTML = '&#9654;';
+            });
+            if (timeEl) timeEl.textContent = '0:00 / --:--';
+            if (play || audioPlayOnReady) {
+                audioPlayOnReady = false;
+                audioPlaying = true;
+                audio.play().then(function() {
+                    if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
+                }).catch(function() {
+                    audioPlaying = false;
+                    if (iconEl) iconEl.innerHTML = '&#9654;';
+                });
+            }
+        }
+
+        function onAudioError() {
+            audioLoading = false;
+            if (suraNum !== audioCurrentSura) return;
+            if (timeEl) timeEl.textContent = 'Audio indisponible';
+            if (iconEl) iconEl.innerHTML = '&#9654;';
+        }
+
+        if (USE_FETCH_BLOB) {
+            // WKWebView (app://) : fetch + blob requis car <audio src="https://"> est bloqué
+            fetch(getAyahUrl(suraNum, ayahNum))
+                .then(function(r) {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.blob();
+                })
+                .then(function(blob) {
+                    if (suraNum !== audioCurrentSura || ayahNum !== audioCurrentAyahNum) return;
+                    audioBlobUrl = URL.createObjectURL(blob);
+                    audio = new Audio(audioBlobUrl);
+                    onAudioReady();
+                })
+                .catch(onAudioError);
+        } else {
+            // Navigateur web : new Audio(url) direct, pas de CORS requis pour les éléments audio
+            audio = new Audio(getAyahUrl(suraNum, ayahNum));
+            onAudioReady();
         }
     }
 
@@ -833,88 +978,87 @@ var QuranReader = (function() {
         var iconEl   = document.getElementById('audio-play-icon');
         if (!playerEl) return;
 
-        // Si même sourate déjà en mémoire, juste ré-afficher
-        if (audioCurrentSura === suraNum && audio) {
+        // Même sourate : juste ré-afficher le player
+        if (audioCurrentSura === suraNum) {
             playerEl.classList.add('visible');
+            setFabAbovePlayer(true);
             return;
         }
 
-        // Nouvelle sourate : arrêter l'ancienne
-        if (audio) {
-            audio.pause();
-            audio.src = '';
-        }
+        // Nouvelle sourate
+        if (audio) { audio.pause(); audio.src = ''; audio = null; }
+        if (audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
+        audioLoading = false;
+        audioPlayOnReady = false;
+        audioPlaying = false;
         clearAyahHighlight();
         audioHighlightedAyah = 0;
 
         audioCurrentSura = suraNum;
-        audioNumAyahs    = SURAS[suraNum - 1][3]; // nombre d'ayahs de la sourate
-        var suraData     = SURAS[suraNum - 1];
-        var url = AUDIO_BASE + padSura(suraNum) + '.mp3';
+        audioNumAyahs    = SURAS[suraNum - 1][3];
+        audioCurrentAyahNum = getSavedAyah(suraNum);
 
-        audio = new Audio();
-        // Pas de crossOrigin : évite le rejet CORS depuis file:// (origin null)
-        audio.preload = 'none';
-        audio.src = url;
-
+        var suraData = SURAS[suraNum - 1];
         if (nameEl) nameEl.textContent = suraData[1] + ' — ' + suraData[2];
-        if (fillEl) fillEl.style.width = '0%';
-        if (timeEl) timeEl.textContent = '0:00 / --:--';
-        if (iconEl) iconEl.innerHTML = '&#9654;'; // ▶
-
-        audio.addEventListener('timeupdate', updateAudioUI);
-        audio.addEventListener('loadedmetadata', updateAudioUI);
-        audio.addEventListener('ended', function() {
-            clearAyahHighlight();
-            audioHighlightedAyah = 0;
-            if (iconEl) iconEl.innerHTML = '&#9654;';
-            if (fillEl) fillEl.style.width = '100%';
-        });
-        audio.addEventListener('error', function() {
-            if (iconEl) iconEl.innerHTML = '&#9654;';
-            if (timeEl) timeEl.textContent = 'Audio indisponible';
-        });
-
+        if (fillEl) fillEl.style.width = ((audioCurrentAyahNum - 1) / audioNumAyahs * 100) + '%';
+        if (timeEl) timeEl.textContent = audioCurrentAyahNum > 1
+            ? 'Ayah ' + audioCurrentAyahNum + ' / ' + audioNumAyahs
+            : '0:00 / --:--';
+        if (iconEl) iconEl.innerHTML = '&#9654;';
         playerEl.classList.add('visible');
-        // NE PAS auto-play : laisser l'utilisateur cliquer Play
-        // (évite l'erreur NotAllowedError sur WKWebView)
+        setFabAbovePlayer(true);
     }
 
     function toggleAudioPlay() {
-        if (!audio) return;
         var iconEl = document.getElementById('audio-play-icon');
+        if (audioLoading) {
+            audioPlayOnReady = !audioPlayOnReady;
+            return;
+        }
+        if (!audio) {
+            // Rien de chargé : charger l'ayah courante et lire
+            loadAyah(audioCurrentSura, audioCurrentAyahNum || 1, true);
+            return;
+        }
         if (audio.paused) {
-            var p = audio.play();
-            if (p && typeof p.then === 'function') {
-                p.then(function() {
-                    if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
-                }).catch(function() {
-                    if (iconEl) iconEl.innerHTML = '&#9654;';
-                });
-            } else {
+            audioPlaying = true;
+            audio.play().then(function() {
                 if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
-            }
+            }).catch(function() {
+                audioPlaying = false;
+                if (iconEl) iconEl.innerHTML = '&#9654;';
+            });
         } else {
+            audioPlaying = false;
             audio.pause();
+            saveAudioPosition();
             if (iconEl) iconEl.innerHTML = '&#9654;';
         }
     }
 
     function stopAudio() {
-        if (audio) audio.pause();
+        saveAudioPosition();
+        audioPlaying = false;
+        if (audio) { audio.pause(); audio.src = ''; audio = null; }
+        if (audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
+        audioLoading = false;
+        audioPlayOnReady = false;
         clearAyahHighlight();
         audioHighlightedAyah = 0;
         var playerEl = document.getElementById('audio-player');
         if (playerEl) playerEl.classList.remove('visible');
+        setFabAbovePlayer(false);
     }
 
+    // Seek via clic sur la barre de progression → sauter à l'ayah correspondante
     function seekAudio(e) {
-        if (!audio || !audio.duration) return;
         var bar = document.getElementById('audio-progress-bar');
         if (!bar) return;
         var rect = bar.getBoundingClientRect();
         var ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        audio.currentTime = ratio * audio.duration;
+        var targetAyah = Math.max(1, Math.min(audioNumAyahs, Math.floor(ratio * audioNumAyahs) + 1));
+        var wasPlaying = audioPlaying || (audio && !audio.paused);
+        loadAyah(audioCurrentSura, targetAyah, wasPlaying);
     }
 
     return {

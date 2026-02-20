@@ -848,6 +848,15 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+.audio-reciter {
+    font-size: 0.68rem;
+    color: rgba(255, 255, 255, 0.38);
+    text-align: center;
+    margin-top: 3px;
+    font-family: 'Amiri', 'Traditional Arabic', serif;
+    letter-spacing: 0.01em;
+}
+
 .audio-close-btn {
     width: 30px;
     height: 30px;
