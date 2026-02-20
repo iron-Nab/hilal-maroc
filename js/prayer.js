@@ -6,12 +6,13 @@
 
 var Prayer = (function () {
 
-    // --- Convention Maroc ---
-    var FAJR_ANGLE    = -19;       // degrés sous l'horizon
-    var ISHA_ANGLE    = -17;       // degrés sous l'horizon
-    var ASR_FACTOR    = 1;         // 1 = Shafi'i, 2 = Hanafi
-    var DHUHR_MARGIN  = 2 / 60;    // heures (2 minutes)
-    var MAGHRIB_MARGIN = 3 / 60;   // heures (3 minutes)
+    // --- Convention marocaine — Ministère des Habous ---
+    var FAJR_ANGLE     = -19;       // degrés sous l'horizon (ihtiyat déjà inclus dans l'angle)
+    var ISHA_ANGLE     = -17;       // degrés sous l'horizon
+    var ASR_FACTOR     = 1;         // 1 = Shafi'i, 2 = Hanafi
+    var IHTIYAT_MIN    = 4 / 60;   // heures — correction précautionneuse Habous Maroc (+4 min)
+    var DHUHR_MARGIN   = 5 / 60;   // heures (transit solaire + 5 min — Habous Maroc)
+    var MAGHRIB_MARGIN = 5 / 60;   // heures (coucher + 5 min — Habous Maroc)
 
     // --- Helper : heure où le soleil atteint l'altitude h0 ---
     // direction: 'rise' (avant transit) ou 'set' (après transit)
@@ -89,16 +90,17 @@ var Prayer = (function () {
 
     // --- API publique ---
     function computeAllTimes(year, month, day, lat, lon) {
+        var shurouq = Sun.computeSunrise(year, month, day, lat, lon);
+        var sunset  = Sun.computeSunset(year, month, day, lat, lon);
+        var asr     = computeAsr(year, month, day, lat, lon);
+        var isha    = computeSunTime(year, month, day, lat, lon, ISHA_ANGLE, 'set');
         return {
             fajr:    computeSunTime(year, month, day, lat, lon, FAJR_ANGLE, 'rise'),
-            shurouq: Sun.computeSunrise(year, month, day, lat, lon),
+            shurouq: shurouq !== null ? shurouq + IHTIYAT_MIN : null,
             dhuhr:   computeSolarNoon(year, month, day, lon) + DHUHR_MARGIN,
-            asr:     computeAsr(year, month, day, lat, lon),
-            maghrib: (function () {
-                var s = Sun.computeSunset(year, month, day, lat, lon);
-                return s !== null ? s + MAGHRIB_MARGIN : null;
-            })(),
-            isha:    computeSunTime(year, month, day, lat, lon, ISHA_ANGLE, 'set')
+            asr:     asr     !== null ? asr     + IHTIYAT_MIN : null,
+            maghrib: sunset  !== null ? sunset  + MAGHRIB_MARGIN : null,
+            isha:    isha    !== null ? isha    + IHTIYAT_MIN : null
         };
     }
 
