@@ -12,8 +12,8 @@ var QuranReader = (function() {
     var LAST_POS_KEY = 'quran-last-position';
     var API_BASE = 'https://api.alquran.cloud/v1/surah/';
     var EDITION = 'quran-uthmani';
-    // Islamic Network CDN — CORS enabled, Warsh Hafs edition
-    var AUDIO_BASE = 'https://cdn.islamic.network/quran/audio-surah/128/ar.warsh/';
+    // QuranicAudio — Warsh par Al-Hussary (zéro-paddé sur 3 chiffres)
+    var AUDIO_BASE = 'https://download.quranicaudio.com/quran/warsh_from_nafi_by_al-hussary/';
 
     // ── Audio state ──
     var audio = null;
@@ -779,6 +779,8 @@ var QuranReader = (function() {
     }
 
     // ── Audio Player ──
+    function padSura(n) { return ('000' + n).slice(-3); }
+
     function formatAudioTime(s) {
         if (!isFinite(s) || s < 0) return '--:--';
         var m = Math.floor(s / 60);
@@ -848,8 +850,7 @@ var QuranReader = (function() {
         audioCurrentSura = suraNum;
         audioNumAyahs    = SURAS[suraNum - 1][3]; // nombre d'ayahs de la sourate
         var suraData     = SURAS[suraNum - 1];
-        // Islamic Network CDN — pas de zero-padding, CORS enabled
-        var url = AUDIO_BASE + suraNum + '.mp3';
+        var url = AUDIO_BASE + padSura(suraNum) + '.mp3';
 
         audio = new Audio();
         // Pas de crossOrigin : évite le rejet CORS depuis file:// (origin null)
