@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>أدعية بعد الصلاة - أنواري</title>
-    <link rel="stylesheet" href="css/adkar.css?v=1">
+    <title>أدعية - أنواري</title>
+    <link rel="stylesheet" href="css/adkar.css?v=2">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -20,11 +20,21 @@
             <a href="index.html" class="btn-home" title="Retour accueil">&#8592;</a>
             <h1>أدعية</h1>
         </div>
-        <p class="subtitle">أدعية ما بعد الصلاة من الأحاديث الصحيحة</p>
+        <p class="subtitle">أدعية من الأحاديث الصحيحة</p>
     </header>
 
+    <!-- Tabs -->
+    <div class="tab-bar">
+        <button class="tab-btn tab-active" id="tab-afterPrayer" onclick="switchTab('afterPrayer')">
+            🕌 بعد الصلاة
+        </button>
+        <button class="tab-btn" id="tab-daily" onclick="switchTab('daily')">
+            🌿 خلال اليوم
+        </button>
+    </div>
+
     <!-- Progress Bar -->
-    <div class="progress-bar-wrap" style="margin-top:0;">
+    <div class="progress-bar-wrap">
         <div class="progress-bar-inner" id="progress-bar"></div>
         <span class="progress-label" id="progress-label">0 / 0</span>
     </div>
@@ -39,8 +49,9 @@
         <button class="btn-reset" onclick="resetAll()">↺ إعادة البدء</button>
     </div>
 
-    <script src="js/adiya-data.js?v=1"></script>
+    <script src="js/adiya-data.js?v=2"></script>
     <script>
+    var currentTab = 'afterPrayer';
     var counters = {};
     var STORAGE_KEY = 'adiya-state';
 
@@ -63,11 +74,19 @@
         return d.getFullYear() + '-' + (d.getMonth()+1) + '-' + d.getDate();
     }
 
+    function switchTab(tab) {
+        currentTab = tab;
+        document.getElementById('tab-afterPrayer').classList.toggle('tab-active', tab === 'afterPrayer');
+        document.getElementById('tab-daily').classList.toggle('tab-active', tab === 'daily');
+        renderList();
+    }
+
     function renderList() {
+        var data = AdiyaData[currentTab];
         var list = document.getElementById('adkar-list');
         list.innerHTML = '';
 
-        AdiyaData.forEach(function(item, idx) {
+        data.forEach(function(item, idx) {
             var key = item.id;
             var current = counters[key] || 0;
             var done = current >= item.count;
@@ -123,7 +142,6 @@
         if (counters[key] > maxCount) counters[key] = maxCount;
         saveState();
 
-        var item = AdiyaData.find(function(i) { return i.id === key; });
         var current = counters[key];
         var done = current >= maxCount;
 
@@ -154,18 +172,20 @@
     }
 
     function updateProgress() {
+        var data = AdiyaData[currentTab];
         var done = 0;
-        AdiyaData.forEach(function(item) {
+        data.forEach(function(item) {
             if ((counters[item.id] || 0) >= item.count) done++;
         });
-        var total = AdiyaData.length;
+        var total = data.length;
         var pct = total > 0 ? Math.round(done / total * 100) : 0;
         document.getElementById('progress-bar').style.width = pct + '%';
         document.getElementById('progress-label').textContent = done + ' / ' + total;
     }
 
     function resetAll() {
-        AdiyaData.forEach(function(item) { delete counters[item.id]; });
+        var data = AdiyaData[currentTab];
+        data.forEach(function(item) { delete counters[item.id]; });
         saveState();
         renderList();
     }
