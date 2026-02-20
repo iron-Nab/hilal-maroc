@@ -1,7 +1,7 @@
 {
-  "name": "Hilal Maroc",
-  "short_name": "Hilal Maroc",
-  "description": "Prédiction de la visibilité du croissant lunaire et horaires de prière — Royaume du Maroc",
+  "name": "Anwari — أنواري",
+  "short_name": "Anwari",
+  "description": "Horaires de prière, observation du croissant lunaire, météo et Coran — Royaume du Maroc",
   "start_url": "./index.html",
   "display": "standalone",
   "orientation": "portrait-primary",

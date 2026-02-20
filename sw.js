@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hilal-maroc-v10';
+const CACHE_NAME = 'anwari-v1';
 const ASSETS = [
   './',
   './index.html',
