@@ -809,6 +809,22 @@ var QuranReader = (function() {
         return AUDIO_AYAH_BASE + padSura(suraNum) + padAyah(ayahNum) + '.mp3';
     }
 
+    // Notifie l'app native (iOS) pour CarPlay Now Playing
+    function notifyNowPlaying(isPlaying) {
+        if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.nowPlaying) return;
+        if (!audioCurrentSura) return;
+        var suraData = SURAS[audioCurrentSura - 1];
+        var payload = {
+            title:       suraData ? suraData[1] : '',          // nom arabe
+            artist:      'سعد الغامدي',
+            album:       suraData ? ('سورة ' + suraData[2] + ' (' + audioCurrentSura + ')') : '',
+            duration:    (audio && audio.duration) ? audio.duration : 0,
+            currentTime: (audio && audio.currentTime) ? audio.currentTime : 0,
+            isPlaying:   !!isPlaying
+        };
+        try { window.webkit.messageHandlers.nowPlaying.postMessage(payload); } catch(e) {}
+    }
+
     function saveAudioPosition() {
         if (!audioCurrentSura || !audioCurrentAyahNum) return;
         try {
@@ -913,7 +929,7 @@ var QuranReader = (function() {
             if (suraNum !== audioCurrentSura || ayahNum !== audioCurrentAyahNum) return;
             audioLoading = false;
             audio.addEventListener('loadedmetadata', updateAudioUI);
-            audio.addEventListener('timeupdate', updateAudioUI);
+            audio.addEventListener('timeupdate', function() { updateAudioUI(); notifyNowPlaying(audioPlaying); });
             audio.addEventListener('ended', function() {
                 if (suraNum !== audioCurrentSura) return;
                 if (audioPlaying) {
@@ -933,6 +949,7 @@ var QuranReader = (function() {
                 audioPlaying = true;
                 audio.play().then(function() {
                     if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
+                    notifyNowPlaying(true);
                 }).catch(function() {
                     audioPlaying = false;
                     if (iconEl) iconEl.innerHTML = '&#9654;';
@@ -1022,6 +1039,7 @@ var QuranReader = (function() {
             audioPlaying = true;
             audio.play().then(function() {
                 if (iconEl) iconEl.innerHTML = '&#10074;&#10074;';
+                notifyNowPlaying(true);
             }).catch(function() {
                 audioPlaying = false;
                 if (iconEl) iconEl.innerHTML = '&#9654;';
@@ -1031,12 +1049,14 @@ var QuranReader = (function() {
             audio.pause();
             saveAudioPosition();
             if (iconEl) iconEl.innerHTML = '&#9654;';
+            notifyNowPlaying(false);
         }
     }
 
     function stopAudio() {
         saveAudioPosition();
         audioPlaying = false;
+        notifyNowPlaying(false);
         if (audio) { audio.pause(); audio.src = ''; audio = null; }
         if (audioBlobUrl) { URL.revokeObjectURL(audioBlobUrl); audioBlobUrl = null; }
         audioLoading = false;
