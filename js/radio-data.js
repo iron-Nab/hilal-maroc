@@ -12,7 +12,7 @@ var RadioData = {
             { id: 'n1', name: 'إذاعة القرآن الكريم - السعودية', nameEn: 'Saudi Arabia', url: 'https://stream.radiojar.com/0tpy1h0kxtzuv', flag: '🇸🇦' },
             { id: 'n2', name: 'إذاعة القرآن الكريم - القاهرة', nameEn: 'Egypt (Cairo)', url: 'https://stream.radiojar.com/8s5u5tpdtwzuv', flag: '🇪🇬' },
             { id: 'n3', name: 'إذاعة الحرم المكي', nameEn: 'Masjid Al-Haram', url: 'https://backup.qurango.net/radio/mix', flag: '🕋' },
-            { id: 'n4', name: 'إذاعة القرآن - الجزائر', nameEn: 'Algeria', url: 'https://webradio.tda.dz/Coran_64K.mp3', flag: '🇩🇿' },
+            { id: 'n4', name: 'إذاعة محمد السادس للقرآن الكريم', nameEn: 'Morocco - Mohammed VI', url: 'https://cdnamd-hls-globecast.akamaized.net/live/ramdisk/assadissa/hls_snrt/index.m3u8', flag: '🇲🇦' },
             { id: 'n5', name: 'نداء الإسلام - السعودية', nameEn: 'Nidaa Al-Islam', url: 'https://backup.qurango.net/radio/salma', flag: '🇸🇦' }
         ]
     },
