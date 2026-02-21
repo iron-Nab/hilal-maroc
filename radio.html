@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إذاعات القرآن الكريم - أنواري</title>
+    <link rel="stylesheet" href="css/adkar.css?v=3">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Anwari">
+    <meta name="theme-color" content="#0d4f4f">
+    <style>
+        /* --- Radio specific --- */
+        .cat-tabs { display:flex; flex-wrap:wrap; gap:6px; padding:10px 14px; background:rgba(13,79,79,0.04); justify-content:center; }
+        .cat-tab {
+            padding:7px 14px; border-radius:20px; border:1.5px solid rgba(13,79,79,0.18);
+            background:#fff; color:var(--text); font-size:0.82rem; cursor:pointer;
+            font-family:'Traditional Arabic','Amiri',serif; transition:all 0.2s;
+        }
+        .cat-tab.active { background:var(--primary); color:#fff; border-color:var(--primary); }
+
+        .radio-card {
+            background:var(--bg-card); border-radius:var(--radius); box-shadow:var(--shadow);
+            padding:14px 16px; border-right:4px solid var(--accent);
+            display:flex; align-items:center; gap:14px; cursor:pointer;
+            transition: background 0.2s, border-color 0.2s, transform 0.1s;
+            -webkit-tap-highlight-color:transparent;
+        }
+        .radio-card:active { transform:scale(0.98); }
+        .radio-card.playing { border-right-color:var(--green); background:rgba(46,125,50,0.04); }
+
+        .radio-flag { font-size:1.8rem; flex-shrink:0; line-height:1; }
+        .radio-info { flex:1; min-width:0; }
+        .radio-name { font-family:'Traditional Arabic','Amiri',serif; font-size:1.05rem; font-weight:700; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .radio-name-en { font-size:0.75rem; color:var(--text-light); }
+
+        .radio-play-btn {
+            width:40px; height:40px; border-radius:50%; border:none;
+            background:linear-gradient(135deg,var(--primary),var(--primary-light));
+            color:#fff; font-size:1.1rem; cursor:pointer; flex-shrink:0;
+            display:flex; align-items:center; justify-content:center;
+            transition:transform 0.1s, box-shadow 0.15s;
+            box-shadow:0 2px 6px rgba(13,79,79,0.3);
+        }
+        .radio-play-btn:active { transform:scale(0.9); }
+        .radio-card.playing .radio-play-btn { background:linear-gradient(135deg,#c62828,#e53935); }
+
+        /* --- Now playing bar --- */
+        .now-playing {
+            position:fixed; bottom:0; left:0; right:0; z-index:100;
+            background:linear-gradient(135deg,var(--primary),var(--primary-light));
+            color:#fff; display:none; align-items:center; gap:12px;
+            padding:12px 16px; box-shadow:0 -2px 12px rgba(0,0,0,0.2);
+        }
+        .now-playing.visible { display:flex; }
+        .np-info { flex:1; min-width:0; }
+        .np-name { font-family:'Traditional Arabic','Amiri',serif; font-size:1rem; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .np-sub { font-size:0.72rem; opacity:0.7; }
+        .np-btn {
+            width:38px; height:38px; border-radius:50%; border:2px solid rgba(255,255,255,0.5);
+            background:transparent; color:#fff; font-size:1.1rem; cursor:pointer;
+            display:flex; align-items:center; justify-content:center;
+        }
+        .np-loading { display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* padding bottom for fixed bar */
+        .adkar-main { padding-bottom:120px !important; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="adkar-header">
+        <div class="header-top">
+            <a href="index.html" class="btn-home" title="Retour accueil">&#8592;</a>
+            <h1>إذاعات القرآن</h1>
+        </div>
+        <p class="subtitle">إذاعات القرآن الكريم من مختلف البلدان والقراء</p>
+    </header>
+
+    <!-- Category tabs -->
+    <div class="cat-tabs" id="cat-tabs"></div>
+
+    <!-- Station list -->
+    <main class="adkar-main" id="station-list"></main>
+
+    <!-- Now Playing Bar -->
+    <div class="now-playing" id="now-playing">
+        <div class="np-info">
+            <div class="np-name" id="np-name"></div>
+            <div class="np-sub" id="np-sub"></div>
+        </div>
+        <button class="np-btn" id="np-btn" onclick="toggleCurrent()">&#9632;</button>
+    </div>
+
+    <script src="js/radio-data.js?v=1"></script>
+    <script>
+    var audio = null;
+    var currentStation = null;
+    var currentCat = 'national';
+
+    var catKeys = Object.keys(RadioData);
+
+    function renderTabs() {
+        var tabs = document.getElementById('cat-tabs');
+        tabs.innerHTML = '';
+        catKeys.forEach(function(key) {
+            var cat = RadioData[key];
+            var btn = document.createElement('button');
+            btn.className = 'cat-tab' + (key === currentCat ? ' active' : '');
+            btn.textContent = cat.icon + ' ' + cat.label;
+            btn.onclick = function() { currentCat = key; renderTabs(); renderStations(); };
+            tabs.appendChild(btn);
+        });
+    }
+
+    function renderStations() {
+        var list = document.getElementById('station-list');
+        list.innerHTML = '';
+        var stations = RadioData[currentCat].stations;
+
+        stations.forEach(function(st) {
+            var card = document.createElement('div');
+            card.className = 'radio-card' + (currentStation && currentStation.id === st.id ? ' playing' : '');
+            card.id = 'card-' + st.id;
+            card.innerHTML =
+                '<div class="radio-flag">' + st.flag + '</div>' +
+                '<div class="radio-info">' +
+                    '<div class="radio-name">' + st.name + '</div>' +
+                    '<div class="radio-name-en">' + st.nameEn + '</div>' +
+                '</div>' +
+                '<button class="radio-play-btn" id="btn-' + st.id + '">' +
+                    (currentStation && currentStation.id === st.id ? '&#9632;' : '&#9654;') +
+                '</button>';
+            card.onclick = function(e) {
+                if (e.target.closest('.radio-play-btn')) { toggleStation(st); }
+                else { toggleStation(st); }
+            };
+            list.appendChild(card);
+        });
+    }
+
+    function toggleStation(st) {
+        if (currentStation && currentStation.id === st.id) {
+            stopAudio();
+            return;
+        }
+        playStation(st);
+    }
+
+    function playStation(st) {
+        stopAudio();
+        currentStation = st;
+        audio = new Audio(st.url);
+        audio.crossOrigin = 'anonymous';
+
+        // Show loading
+        var np = document.getElementById('now-playing');
+        np.classList.add('visible');
+        document.getElementById('np-name').textContent = st.name;
+        document.getElementById('np-sub').innerHTML = '<span class="np-loading"></span> جاري التحميل...';
+        document.getElementById('np-btn').innerHTML = '<span class="np-loading"></span>';
+
+        audio.addEventListener('playing', function() {
+            document.getElementById('np-sub').textContent = st.flag + ' ' + st.nameEn + '  —  بث مباشر';
+            document.getElementById('np-btn').innerHTML = '&#9632;';
+            updateCards();
+            notifyNowPlaying(true);
+        });
+
+        audio.addEventListener('error', function() {
+            document.getElementById('np-sub').textContent = 'خطأ في الاتصال — جرب إذاعة أخرى';
+            document.getElementById('np-btn').innerHTML = '✕';
+            currentStation = null;
+            updateCards();
+        });
+
+        audio.addEventListener('ended', function() {
+            stopAudio();
+        });
+
+        audio.play().catch(function() {
+            document.getElementById('np-sub').textContent = 'خطأ في الاتصال';
+            document.getElementById('np-btn').innerHTML = '✕';
+            currentStation = null;
+            updateCards();
+        });
+
+        updateCards();
+    }
+
+    function stopAudio() {
+        if (audio) { audio.pause(); audio.src = ''; audio = null; }
+        currentStation = null;
+        document.getElementById('now-playing').classList.remove('visible');
+        notifyNowPlaying(false);
+        updateCards();
+    }
+
+    function toggleCurrent() {
+        if (!currentStation) return;
+        if (audio && !audio.paused) {
+            audio.pause();
+            document.getElementById('np-btn').innerHTML = '&#9654;';
+            notifyNowPlaying(false);
+        } else if (audio) {
+            audio.play();
+            document.getElementById('np-btn').innerHTML = '&#9632;';
+            notifyNowPlaying(true);
+        }
+    }
+
+    function updateCards() {
+        var cards = document.querySelectorAll('.radio-card');
+        cards.forEach(function(c) {
+            var id = c.id.replace('card-', '');
+            var isPlaying = currentStation && currentStation.id === id;
+            c.classList.toggle('playing', isPlaying);
+            var btn = c.querySelector('.radio-play-btn');
+            if (btn) btn.innerHTML = isPlaying ? '&#9632;' : '&#9654;';
+        });
+    }
+
+    function notifyNowPlaying(isPlaying) {
+        if (!window.webkit || !window.webkit.messageHandlers || !window.webkit.messageHandlers.nowPlaying) return;
+        var payload = {
+            title:     currentStation ? currentStation.name : '',
+            artist:    'إذاعة القرآن الكريم',
+            album:     currentStation ? currentStation.nameEn : '',
+            duration:  0,
+            currentTime: 0,
+            isPlaying: !!isPlaying
+        };
+        try { window.webkit.messageHandlers.nowPlaying.postMessage(payload); } catch(e) {}
+    }
+
+    renderTabs();
+    renderStations();
+    </script>
+</body>
+</html>
